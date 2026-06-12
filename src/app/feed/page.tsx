@@ -19,7 +19,7 @@ import MentionInput from '@/components/ui/MentionInput'
 import { useRouter } from 'next/navigation'
 import { renderMentions } from '@/components/ui/renderMentions'
 import ImageLightbox from '@/components/ui/ImageLightbox'
-import ShareButton from '@/components/ui/ShareButton'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 export default function FeedPage() {
   const { user, profile } = useAuth()
@@ -128,9 +128,7 @@ export default function FeedPage() {
   function Avatar({ name, avatarUrl, size = 10, rounded = 'xl' }: { name: string; avatarUrl?: string | null; size?: number; rounded?: string }) {
     const ini = (name ?? '?').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '?'
     const px = size * 4
-    return avatarUrl
-      ? <img src={avatarUrl} alt={name} style={{ width: px, height: px, borderRadius: rounded === 'full' ? '50%' : 12, objectFit: 'cover', flexShrink: 0 }}/>
-      : <div style={{ width: px, height: px, borderRadius: rounded === 'full' ? '50%' : 12, background: '#1a3055', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: px * 0.32, fontWeight: 900, color: 'white', flexShrink: 0 }}>{ini}</div>
+    return <AvatarImg src={avatarUrl} alt={name} fallback={<div style={{ width: px, height: px, borderRadius: rounded === 'full' ? '50%' : 12, background: '#1a3055', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: px * 0.32, fontWeight: 900, color: 'white', flexShrink: 0 }}>{ini}</div>} style={{ width: px, height: px, borderRadius: rounded === 'full' ? '50%' : 12, objectFit: 'cover', flexShrink: 0 }} />
   }
 
   return (
@@ -320,7 +318,7 @@ export default function FeedPage() {
                       </div>
                     </div>
                   ) : (
-                    post.text && <p className="text-sm text-slate-700 mt-2 leading-relaxed">{renderMentions(post.text)}</p>
+                    post.text && <p className="text-sm text-slate-700 mt-2 leading-relaxed whitespace-pre-wrap">{renderMentions(post.text)}</p>
                   )}
                   {post.media_url && (
                     post.media_type === 'image'
@@ -347,23 +345,6 @@ export default function FeedPage() {
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${showComments ? 'bg-slate-100 text-slate-700' : 'text-slate-400 hover:bg-slate-50'}`}>
                       💬 {post.comments.length}
                     </button>
-                    <div className="ml-auto">
-                      <ShareButton
-                        postId={post.id}
-                        text={post.text ?? ''}
-                        postData={{
-                          text:        post.text,
-                          mediaUrl:    post.media_url,
-                          mediaType:   post.media_type,
-                          mediaName:   post.media_name,
-                          authorName:  post.profiles
-                            ? `${post.profiles?.first_name ?? ''} ${post.profiles?.last_name ?? ''}`.trim() || post.profiles?.name || 'Member'
-                            : 'Member',
-                          institution: post.profiles?.institution,
-                          createdAt:   post.created_at,
-                        }}
-                      />
-                    </div>
                   </div>
                   {showComments && (
                     <div className="mt-2 space-y-2">
@@ -380,7 +361,7 @@ export default function FeedPage() {
                               className={`text-xs font-semibold text-slate-700 ${c.user_id && c.user_id !== user?.id ? 'cursor-pointer hover:underline' : ''}`}>
                               {c.profiles?.name}{' '}
                             </span>
-                            <span className="text-xs text-slate-600">{renderMentions(c.text)}</span>
+                            <span className="text-xs text-slate-600 whitespace-pre-wrap">{renderMentions(c.text)}</span>
                           </div>
                         </div>
                         )

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useState, useEffect, useMemo } from 'react'
 import type { Profile } from '@/lib/supabase/supabase/types'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 type Contributor = { id: string; name: string | null; first_name: string | null; last_name: string | null; institution: string | null; links: number; avatar_url: string | null }
 type Institution = { name: string; totalLinks: number; memberCount: number }
@@ -71,9 +72,7 @@ export default function RightPanel({ profile }: { profile: Profile | null }) {
               <Link key={u.id} href={`/profile/${u.id}`} className="flex items-center gap-2 p-1.5 rounded-xl mb-1 hover:bg-slate-50 transition-colors no-underline">
                 <span className="text-xs w-4 font-bold text-center flex-shrink-0 text-slate-400">{RANK_ICON[i] ?? `#${i+1}`}</span>
                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 overflow-hidden" style={{ background: '#1a3055' }}>
-                  {u.avatar_url
-                    ? <img src={u.avatar_url} alt={displayName(u)} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
-                    : initials}
+                  <AvatarImg src={u.avatar_url} alt={displayName(u)} fallback={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-slate-700 truncate leading-tight">{displayName(u)}</p>

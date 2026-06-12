@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getOrCreateConversation } from '@/lib/hooks/useDirectMessages'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 type SearchUser = { id: string; name: string | null; first_name: string | null; last_name: string | null; institution: string | null; avatar_url: string | null }
 
@@ -108,9 +109,7 @@ export default function MessagesPage() {
                     background: '#1a3055', display: 'flex', alignItems: 'center',
                     justifyContent: 'center', overflow: 'hidden',
                   }}>
-                    {u.avatar_url
-                      ? <img src={u.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={userName(u)}/>
-                      : <span style={{ fontSize: 12, fontWeight: 800, color: 'white' }}>{inits}</span>}
+                    <AvatarImg src={u.avatar_url} alt={userName(u)} fallback={<span style={{ fontSize: 12, fontWeight: 800, color: 'white' }}>{inits}</span>} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div>
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#1a3055' }}>{userName(u)}</p>
@@ -159,9 +158,7 @@ export default function MessagesPage() {
                   background: '#1a3055', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', overflow: 'hidden', position: 'relative',
                 }}>
-                  {p?.avatar_url
-                    ? <img src={p.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={dn}/>
-                    : <span style={{ fontSize: 14, fontWeight: 800, color: 'white' }}>{ini}</span>}
+                  <AvatarImg src={p?.avatar_url} alt={dn} fallback={<span style={{ fontSize: 14, fontWeight: 800, color: 'white' }}>{ini}</span>} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   {conv.unread_count > 0 && (
                     <div style={{
                       position: 'absolute', top: -3, right: -3,

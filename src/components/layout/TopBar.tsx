@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import NotificationBell from '@/components/ui/NotificationBell'
 import type { Profile } from '@/lib/supabase/supabase/types'
 import type { useNotifications } from '@/lib/hooks/useNotifications'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 const PAGE_TITLES: Record<string, string> = {
   '/feed': 'Feed', '/network': 'Network', '/channels': 'Channels',
@@ -177,10 +178,7 @@ export default function TopBar({
                   background: '#1a3055', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'white',
                 }}>
-                  {u.avatar_url
-                    ? <img src={u.avatar_url} alt={getDisplayName(u)} style={{ width: 32, height: 32, objectFit: 'cover' }} />
-                    : getInitials(u)
-                  }
+                  <AvatarImg src={u.avatar_url} alt={getDisplayName(u)} fallback={getInitials(u)} style={{ width: 32, height: 32, objectFit: 'cover' }} />
                 </div>
                 {/* Info */}
                 <div style={{ minWidth: 0, flex: 1 }}>
@@ -273,9 +271,7 @@ export default function TopBar({
         {/* Profile chip */}
         <button onClick={() => router.push('/profile')} className="profile-chip">
           <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#1a3055', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900, color: 'white', flexShrink: 0, overflow: 'hidden' }}>
-            {profile?.avatar_url
-              ? <img src={profile?.avatar_url} alt={displayName} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
-              : initials}
+            <AvatarImg src={profile?.avatar_url} alt={displayName} fallback={initials} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
           </div>
           <span style={{ fontSize: 12, fontWeight: 600, color: '#1a3055', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {displayName}

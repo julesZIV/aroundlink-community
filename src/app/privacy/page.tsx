@@ -1,7 +1,8 @@
 import type { CSSProperties } from 'react'
 
 export default function PrivacyPage() {
-  const updated = 'April 22, 2025'
+  const updated = 'June 12, 2026'
+  const version = '1.0'
   const contact = 'simon@aroundlink.com'
   const appName = 'AroundLink'
   const company = 'AroundLink'
@@ -17,7 +18,7 @@ export default function PrivacyPage() {
             <span style={{ fontSize: 18, fontWeight: 900, color: '#1a3055' }}>{appName}</span>
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>Privacy Policy</h1>
-          <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>Last updated: {updated}</p>
+          <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>Version {version} · Last updated: {updated}</p>
         </div>
 
         <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.75 }}>
@@ -34,7 +35,8 @@ export default function PrivacyPage() {
             <li><strong>Account information</strong>: name, professional email address, password (hashed)</li>
             <li><strong>Profile information</strong>: institution, role, LinkedIn profile URL</li>
             <li><strong>Content</strong>: posts, messages, comments, and files you share on the platform</li>
-            <li><strong>Usage data</strong>: pages visited, features used, timestamps of activity</li>
+            <li><strong>Activity data</strong>: timestamps of the content you create (e.g. posts, comments, messages) and your engagement score (Links). We do <strong>not</strong> track page views or use any third-party analytics tool.</li>
+            <li><strong>Consent record</strong>: the version of our Terms of Service you accepted and the date of acceptance</li>
           </ul>
           <p>When you sign in with LinkedIn, we receive from LinkedIn only the information you authorize: your name, email address, and public profile data.</p>
 
@@ -71,6 +73,14 @@ export default function PrivacyPage() {
             <li><strong>Vercel</strong> — hosting provider for the web application</li>
           </ul>
           <p>All third-party providers are bound by their own privacy policies and applicable data protection regulations.</p>
+          <p>
+            <strong>International transfers.</strong> Our primary database is hosted by Supabase within the
+            European Union. However, {' '}<strong>Vercel</strong>, our web hosting provider, may process certain
+            technical data (such as the IP addresses inherent to serving web requests) on infrastructure located
+            in the United States. Where personal data is transferred outside the EU/EEA, such transfers are
+            covered by appropriate safeguards, including the European Commission's Standard Contractual Clauses
+            (SCCs).
+          </p>
 
           <h2 style={h2}>6. Your Rights</h2>
           <p>You have the right to:</p>
@@ -80,6 +90,7 @@ export default function PrivacyPage() {
             <li><strong>Delete</strong> your account and associated data by contacting us</li>
             <li><strong>Export</strong> your data upon request</li>
             <li><strong>Object</strong> to processing by contacting us</li>
+            <li><strong>Withdraw your consent</strong> at any time, where our processing is based on your consent. Withdrawing consent does not affect the lawfulness of processing carried out before the withdrawal.</li>
           </ul>
           <p>
             If you are located in the European Economic Area (EEA), you have rights under the General Data Protection
@@ -87,10 +98,22 @@ export default function PrivacyPage() {
             <a href={`mailto:${contact}`} style={{ color: '#1a3055' }}>{contact}</a>.
           </p>
 
-          <h2 style={h2}>7. Cookies</h2>
+          <h2 style={h2}>7. Cookies and Local Storage</h2>
           <p>
             We use only essential cookies necessary for authentication and session management. We do not use tracking
-            or advertising cookies. No cookie consent banner is required beyond this notice.
+            or advertising cookies, and we do not run any third-party analytics. No cookie consent banner is required
+            beyond this notice.
+          </p>
+          <p>
+            In addition to cookies, {appName} uses your browser's <strong>local storage</strong> for two purposes:
+          </p>
+          <ul style={ul}>
+            <li><strong>Session</strong>: your secure authentication tokens (issued by Supabase) are kept in local storage so you stay signed in. Clearing your browser storage will sign you out.</li>
+            <li><strong>Interface preferences</strong>: small flags that remember, for example, that you have already seen the notifications prompt or the onboarding step, so they are not shown again.</li>
+          </ul>
+          <p>
+            This information stays in your browser, is strictly necessary to operate the service, and is not used for
+            tracking or advertising.
           </p>
 
           <h2 style={h2}>8. Data Retention</h2>

@@ -18,8 +18,8 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       // Styles: self + inline (Tailwind)
       "style-src 'self' 'unsafe-inline'",
-      // Images: self + Supabase storage + Unsplash
-      "img-src 'self' data: blob: https://qhcswcttvzahsrdpeqkl.supabase.co https://images.unsplash.com",
+      // Images: self + Supabase storage + Unsplash + LinkedIn profile photos
+      "img-src 'self' data: blob: https://qhcswcttvzahsrdpeqkl.supabase.co https://images.unsplash.com https://media.licdn.com",
       // Fonts
       "font-src 'self'",
       // API calls: self + Supabase + university data APIs
@@ -41,6 +41,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'qhcswcttvzahsrdpeqkl.supabase.co' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'media.licdn.com' },
     ],
   },
   async headers() {

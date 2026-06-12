@@ -1,7 +1,8 @@
 import type { CSSProperties } from 'react'
 
 export default function CguPage() {
-  const updated = 'April 24, 2025'
+  const updated = 'June 12, 2026'
+  const version = '1.0'
   const contact = 'simon@aroundlink.com'
   const appName = 'AroundLink'
   const company = 'AroundLink'
@@ -17,7 +18,7 @@ export default function CguPage() {
             <span style={{ fontSize: 18, fontWeight: 900, color: '#1a3055' }}>{appName}</span>
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>Terms of Service</h1>
-          <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>Last updated: {updated}</p>
+          <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>Version {version} · Last updated: {updated}</p>
         </div>
 
         <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.75 }}>
@@ -34,6 +35,12 @@ export default function CguPage() {
             Terms of Service and our <a href="/privacy" style={{ color: '#1a3055' }}>Privacy Policy</a>.
             If you do not agree, you may not use the Platform.
           </p>
+          <p>
+            You accept these Terms when you create an account — either by registering with your email (by ticking
+            the acceptance box) or by signing up with LinkedIn (where ticking the same box is required before
+            continuing). For each account, we record which version of these Terms was accepted and the date of
+            acceptance.
+          </p>
 
           <h2 style={h2}>2. Description of Service</h2>
           <p>
@@ -42,8 +49,10 @@ export default function CguPage() {
             a university network directory, and a referral system.
           </p>
           <p>
-            Access to {appName} is by invitation or referral only. {company} reserves the right to accept or
-            reject any registration request.
+            Registration is open to eligible professionals in higher education and international relations.
+            Access is commonly facilitated through referral links shared by existing members, but is not
+            strictly limited to invited users. {company} reserves the right to accept or reject any registration
+            request, and to verify your professional affiliation.
           </p>
 
           <h2 style={h2}>3. Account Registration</h2>
@@ -79,9 +88,16 @@ export default function CguPage() {
 
           <h2 style={h2}>6. Links Score and Referral System</h2>
           <p>
-            {appName} includes an engagement scoring system ("Links") and a referral program. Links are
-            non-monetary, non-transferable, and have no cash value. {company} reserves the right to modify
-            or discontinue the Links system or referral rewards at any time without notice.
+            {appName} includes an engagement scoring system ("Links") that reflects your activity on the
+            Platform (such as posts, comments, messages, and referrals). Each member also receives a personal
+            referral code and link: when a new member creates an account through your referral link, you are
+            awarded a fixed number of Links (currently 150) once their account is confirmed.
+          </p>
+          <p>
+            Links are non-monetary, non-transferable, and have no cash value. They do not constitute points,
+            currency, or any redeemable benefit. {company} reserves the right to modify, recalculate, or
+            discontinue the Links system, the referral program, or the associated rewards at any time without
+            notice.
           </p>
 
           <h2 style={h2}>7. Moderation and Account Termination</h2>

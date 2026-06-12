@@ -30,6 +30,9 @@ export type Database = {
           chips: number
           referral_code: string | null
           is_anonymized: boolean
+          onboarding_completed: boolean
+          terms_version: string
+          terms_accepted_at: string | null
           created_at: string
           updated_at: string
         }
@@ -53,6 +56,9 @@ export type Database = {
           chips?: number
           referral_code?: string | null
           is_anonymized?: boolean
+          onboarding_completed?: boolean
+          terms_version?: string
+          terms_accepted_at?: string | null
         }
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
       }

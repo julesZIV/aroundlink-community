@@ -2,6 +2,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 type Member = {
   id: string
@@ -18,6 +19,7 @@ type Institution = {
   city: string | null
   country_name: string | null
   university_id: number | null
+  logo_url: string | null
   members: Member[]
   count: number
 }
@@ -107,6 +109,13 @@ export default function InstitutionsView({ externalSearch = '' }: { externalSear
         }
       }
 
+      // Custom logos uploaded by admins, keyed by normalised institution name
+      const { data: logoRows } = await supabase
+        .from('org_logos')
+        .select('name_key, logo_url')
+      const logoByKey: Record<string, string> = {}
+      for (const l of logoRows ?? []) logoByKey[l.name_key] = l.logo_url
+
       const result: Institution[] = Object.entries(grouped)
         .map(([name, { members, university_id }]) => {
           const meta = university_id ? uniMeta[university_id] : null
@@ -117,6 +126,7 @@ export default function InstitutionsView({ externalSearch = '' }: { externalSear
             city: meta?.city ?? null,
             country_name: meta?.country_name ?? null,
             university_id,
+            logo_url: logoByKey[name.trim().toLowerCase()] ?? null,
             members,
             count: members.length,
           }
@@ -191,25 +201,29 @@ export default function InstitutionsView({ externalSearch = '' }: { externalSear
             }}
           >
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 12 }}>
               <div style={{ position: 'relative', flexShrink: 0 }}>
                 <div style={{
-                  width: 44, height: 44, borderRadius: 12,
-                  background: PALETTE[idx % PALETTE.length],
+                  width: 60, height: 60, borderRadius: 14,
+                  background: inst.logo_url ? 'white' : PALETTE[idx % PALETTE.length],
+                  border: inst.logo_url ? '1px solid #e2e8f0' : 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  overflow: 'hidden',
                 }}>
-                  <UniIcon size={26} color="white" />
+                  {inst.logo_url
+                    ? <img src={inst.logo_url} alt={inst.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    : <UniIcon size={34} color="white" />}
                 </div>
                 {inst.flag && (
                   <span style={{
                     position: 'absolute', bottom: -4, right: -6,
-                    fontSize: 14, lineHeight: 1,
+                    fontSize: 16, lineHeight: 1,
                     filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))',
                   }}>{inst.flag}</span>
                 )}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <p style={{ fontWeight: 700, fontSize: 13, color: '#1a3055', lineHeight: 1.3, marginBottom: 2 }}
+                <p style={{ fontWeight: 700, fontSize: 14, color: '#1a3055', lineHeight: 1.3, marginBottom: 2 }}
                   className="line-clamp-2">{inst.name}</p>
                 {(inst.city || inst.country_name) && (
                   <p style={{ fontSize: 11, color: '#94a3b8' }}>
@@ -234,10 +248,7 @@ export default function InstitutionsView({ externalSearch = '' }: { externalSear
                     zIndex: 4 - i,
                     position: 'relative',
                   }}>
-                    {m.avatar_url
-                      ? <img src={m.avatar_url} alt={getDisplayName(m)} style={{ width: 28, height: 28, objectFit: 'cover' }} />
-                      : getInitials(m)
-                    }
+                    <AvatarImg src={m.avatar_url} alt={getDisplayName(m)} fallback={getInitials(m)} style={{ width: 28, height: 28, objectFit: 'cover' }} />
                   </div>
                 ))}
               </div>

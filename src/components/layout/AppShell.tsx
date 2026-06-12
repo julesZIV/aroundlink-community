@@ -11,6 +11,7 @@ import { useConversations } from '@/lib/hooks/useDirectMessages'
 import { useEffect, useState } from 'react'
 import InstitutionVerificationPopup from '@/components/ui/InstitutionVerificationPopup'
 import PushPrompt from '@/components/ui/PushPrompt'
+import IntroPostModal from '@/components/ui/IntroPostModal'
 import { registerServiceWorker, isPushSupported, hasPushBeenAsked } from '@/lib/push'
 
 const RIGHT_PANEL_PAGES = ['/feed', '/channels']
@@ -21,6 +22,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { profile, loading, user, emailVerified, signOut } = useAuth()
   const [globalSearch, setGlobalSearch] = useState('')
   const [showPushPrompt, setShowPushPrompt] = useState(false)
+  // Onboarding sequence for brand-new accounts: step 1 = notifications, step 2 = intro post
+  const [onbStep, setOnbStep] = useState<'push' | 'intro' | null>(null)
   const notif = useNotifications(user?.id)
   const { channels } = useChannels(user?.id)
   const { totalUnread: dmUnread } = useConversations(user?.id)
@@ -52,14 +55,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [totalBadge])
 
-  // Show push prompt once after login (with a short delay so the app feels settled)
+  // Show push prompt once after login — only for members who already finished
+  // onboarding (new accounts get notifications as step 1 of the onboarding flow).
   useEffect(() => {
     if (!user || loading) return
+    if (!profile?.onboarding_completed) return
     if (!isPushSupported()) return
     if (hasPushBeenAsked()) return
     const t = setTimeout(() => setShowPushPrompt(true), 3000)
     return () => clearTimeout(t)
-  }, [user?.id, loading])
+  }, [user?.id, loading, profile?.onboarding_completed])
+
+  // Onboarding for brand-new accounts (per-account via profiles.onboarding_completed):
+  // start with the notifications prompt, then the intro-post modal.
+  useEffect(() => {
+    if (loading || !user || !emailVerified) return
+    if (!profile || profile.onboarding_completed) return
+    if (onbStep !== null) return
+    const t = setTimeout(() => {
+      setOnbStep(isPushSupported() ? 'push' : 'intro')
+    }, 1500)
+    return () => clearTimeout(t)
+  }, [loading, user?.id, emailVerified, profile?.onboarding_completed])
 
   const handleSearch = (q: string) => {
     setGlobalSearch(q)
@@ -136,6 +153,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Push notification opt-in prompt — shown once, 3 s after login */}
       {showPushPrompt && user && (
         <PushPrompt userId={user.id} onDone={() => setShowPushPrompt(false)} />
+      )}
+
+      {/* Onboarding for new accounts — step 1: notifications, step 2: intro post */}
+      {onbStep === 'push' && user && (
+        <PushPrompt userId={user.id} onDone={() => setOnbStep('intro')} />
+      )}
+      {onbStep === 'intro' && (
+        <IntroPostModal onDone={() => setOnbStep(null)} />
       )}
     </div>
   )

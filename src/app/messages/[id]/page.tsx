@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useMessages, useConversations, displayName, initials } from '@/lib/hooks/useDirectMessages'
 import { createClient } from '@/lib/supabase/client'
 import ImageLightbox from '@/components/ui/ImageLightbox'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 // Minimalist SVG icons
 const IconImage = () => (
@@ -215,9 +216,7 @@ export default function ConversationPage() {
                     background: '#1a3055', display: 'flex', alignItems: 'center',
                     justifyContent: 'center', overflow: 'hidden', position: 'relative',
                   }}>
-                    {p?.avatar_url
-                      ? <img src={p.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={dn2}/>
-                      : <span style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>{ini2}</span>}
+                    <AvatarImg src={p?.avatar_url} alt={dn2} fallback={<span style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>{ini2}</span>} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     {conv.unread_count > 0 && (
                       <div style={{
                         position: 'absolute', top: -2, right: -2,
@@ -286,9 +285,7 @@ export default function ConversationPage() {
                 background: '#1a3055', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', overflow: 'hidden', cursor: otherUserId ? 'pointer' : 'default',
               }}>
-              {otherProfile?.avatar_url
-                ? <img src={otherProfile.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={dn}/>
-                : <span style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>{ini}</span>}
+              <AvatarImg src={otherProfile?.avatar_url} alt={dn} fallback={<span style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>{ini}</span>} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div style={{ flex: 1, cursor: otherUserId ? 'pointer' : 'default' }}
               onClick={() => otherUserId && router.push(`/profile/${otherUserId}`)}>
@@ -344,9 +341,7 @@ export default function ConversationPage() {
                               background: '#1a3055', display: 'flex', alignItems: 'center',
                               justifyContent: 'center', overflow: 'hidden',
                             }}>
-                              {otherProfile?.avatar_url
-                                ? <img src={otherProfile.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={dn}/>
-                                : <span style={{ fontSize: 10, fontWeight: 800, color: 'white' }}>{ini}</span>}
+                              <AvatarImg src={otherProfile?.avatar_url} alt={dn} fallback={<span style={{ fontSize: 10, fontWeight: 800, color: 'white' }}>{ini}</span>} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             </div>
                           )}
                         </div>
@@ -373,7 +368,7 @@ export default function ConversationPage() {
                               <span style={{ fontSize: 12, fontWeight: 600 }}>{msg.media_name ?? 'Document'}</span>
                             </a>
                           )}
-                          {msg.text && <span style={{ display: msg.media_url ? 'block' : 'inline', marginTop: msg.media_url ? 4 : 0 }}>{msg.text}</span>}
+                          {msg.text && <span style={{ display: msg.media_url ? 'block' : 'inline', marginTop: msg.media_url ? 4 : 0, whiteSpace: 'pre-wrap' }}>{msg.text}</span>}
                         </div>
                         {(i === group.msgs.length - 1 || group.msgs[i + 1]?.sender_id !== msg.sender_id) && (
                           <p style={{
