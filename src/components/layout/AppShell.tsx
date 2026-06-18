@@ -14,7 +14,9 @@ import PushPrompt from '@/components/ui/PushPrompt'
 import IntroPostModal from '@/components/ui/IntroPostModal'
 import { registerServiceWorker, isPushSupported, hasPushBeenAsked } from '@/lib/push'
 
-const RIGHT_PANEL_PAGES = ['/feed', '/channels']
+// Panneau global "Top Contributors / Top Institutions" : feed uniquement.
+// (Les channels ont leurs propres top contributeurs dans la page du channel.)
+const RIGHT_PANEL_PAGES = ['/feed']
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
