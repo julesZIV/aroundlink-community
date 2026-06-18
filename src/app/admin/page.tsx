@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import AppShell from '@/components/layout/AppShell'
+import AvatarImg from '@/components/ui/AvatarImg'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useGlobalError } from '@/lib/context/ErrorContext'
 import { createClient } from '@/lib/supabase/client'
@@ -11,6 +12,7 @@ type MemberRow = {
   institution_verified: boolean | null
   app_role: 'admin' | 'moderator' | 'member'; links: number; created_at: string
   is_anonymized: boolean
+  avatar_url: string | null
 }
 
 type ScoringRow = {
@@ -86,7 +88,7 @@ export default function AdminPage() {
   // Load members
   useEffect(() => {
     supabase.from('profiles')
-      .select('id, name, email, institution, institution_verified, institution_domain, app_role, links, created_at, is_anonymized')
+      .select('id, name, email, institution, institution_verified, institution_domain, app_role, links, created_at, is_anonymized, avatar_url')
       .order('app_role')
       .order('name')
       .then(({ data, error }) => {
@@ -149,7 +151,7 @@ export default function AdminPage() {
       pushError(`Could not delete account: ${error}`)
     } else {
       setMembers(prev => prev.map(m => m.id === member.id
-        ? { ...m, name: 'Deleted member', email: '', institution: null, is_anonymized: true }
+        ? { ...m, name: 'Deleted member', email: '', institution: null, is_anonymized: true, avatar_url: null }
         : m
       ))
       pushSuccess(`Account anonymized — content preserved.`)
@@ -334,8 +336,12 @@ export default function AdminPage() {
                               onClick={() => !m.is_anonymized && router.push(`/profile/${m.id}`)}
                               style={{ background: 'none', border: 'none', padding: 0, cursor: m.is_anonymized ? 'default' : 'pointer', textAlign: 'left' }}
                               className="flex items-center gap-3 group">
-                              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                                style={{ background: m.is_anonymized ? '#94a3b8' : '#1a3055' }}>{initials}</div>
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0 overflow-hidden"
+                                style={{ background: m.is_anonymized ? '#94a3b8' : '#1a3055' }}>
+                                {m.is_anonymized
+                                  ? initials
+                                  : <AvatarImg src={m.avatar_url} alt={m.name} fallback={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                              </div>
                               <div>
                                 <p className={`text-sm font-semibold ${m.is_anonymized ? 'text-slate-400 italic' : 'text-slate-800 group-hover:underline'}`}>
                                   {m.name} {isMe && <span className="text-xs text-blue-500">(you)</span>}
