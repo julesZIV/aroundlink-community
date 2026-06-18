@@ -28,7 +28,7 @@ export default function ChannelDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { user, profile } = useAuth()
-  const { channels, posts, uploads, myChannelIds, loading, joinChannel, leaveChannel, sendMessage, uploadDoc, toggleLike, addComment, deletePost, editPost } = useChannels(user?.id, profile, id)
+  const { channels, posts, uploads, myChannelIds, loading, joinChannel, leaveChannel, sendMessage, uploadDoc, toggleLike, addComment, deletePost, editPost, updateChannel } = useChannels(user?.id, profile, id)
   const { markAsRead } = useUnread(posts, myChannelIds)
   const supabase = createClient()
 
@@ -110,6 +110,27 @@ export default function ChannelDetailPage() {
   const [editPostText,      setEditPostText]      = useState('')
   const [savingEdit,        setSavingEdit]        = useState(false)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+  // Édition du channel (admin only)
+  const isAdmin = profile?.app_role === 'admin'
+  const [showEditChannel, setShowEditChannel] = useState(false)
+  const [editEmoji, setEditEmoji] = useState('')
+  const [editName,  setEditName]  = useState('')
+  const [editDesc,  setEditDesc]  = useState('')
+  const [savingChannel, setSavingChannel] = useState(false)
+  const openEditChannel = () => {
+    if (!channel) return
+    setEditEmoji(channel.emoji ?? '💬')
+    setEditName(channel.name ?? '')
+    setEditDesc(channel.description ?? '')
+    setShowEditChannel(true)
+  }
+  const saveChannelEdit = async () => {
+    if (!editName.trim()) return
+    setSavingChannel(true)
+    await updateChannel(id, { emoji: editEmoji, name: editName.trim(), description: editDesc.trim() })
+    setSavingChannel(false)
+    setShowEditChannel(false)
+  }
   // All media posts for this channel (Documents tab — unlimited, separate fetch)
   type MediaPost = { id: string; media_type: string; media_url: string; media_name: string | null; created_at: string; profiles: { name: string | null } | null }
   const [allMediaPosts, setAllMediaPosts] = useState<MediaPost[]>([])
@@ -485,6 +506,14 @@ export default function ChannelDetailPage() {
               <h1 className="font-bold text-slate-800 text-sm">#{channel.name}</h1>
               <p className="text-xs text-slate-400 truncate">{channel.description}</p>
             </div>
+
+            {/* Edit (admin) */}
+            {isAdmin && (
+              <button onClick={openEditChannel}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex-shrink-0">
+                ✏️ Edit
+              </button>
+            )}
 
             {/* Leave / Join */}
             <button
@@ -1079,6 +1108,40 @@ export default function ChannelDetailPage() {
               style={{ flex: 1, padding: '10px 0', borderRadius: 12, border: 'none', background: '#ef4444', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
               Leave
             </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Edit channel modal (admin) */}
+    {showEditChannel && channel && (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div style={{ background: 'white', borderRadius: 20, padding: 24, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1a3055', margin: '0 0 16px' }}>Edit channel</h2>
+
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', margin: '0 0 6px' }}>Emoji</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+            {['💬','📢','🎙️','🎤','😂','🎉','🥳','🌍','🌐','🎓','📚','🤝','💡','🚀','🔥','✨','🇪🇺','🇫🇷','✈️','🏛️'].map(e => (
+              <button key={e} onClick={() => setEditEmoji(e)}
+                style={{ width: 34, height: 34, borderRadius: 10, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                  border: editEmoji === e ? '2px solid #1a3055' : '1px solid #e2e8f0', background: editEmoji === e ? '#eef6ff' : 'white' }}>{e}</button>
+            ))}
+          </div>
+
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', margin: '0 0 6px' }}>Name</label>
+          <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Channel name"
+            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 14, color: '#1a3055', outline: 'none', marginBottom: 16 }} />
+
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', margin: '0 0 6px' }}>Description</label>
+          <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} placeholder="What's this channel about?"
+            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 14, color: '#1a3055', outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginBottom: 20 }} />
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => setShowEditChannel(false)} disabled={savingChannel}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 12, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={saveChannelEdit} disabled={savingChannel || !editName.trim()}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 12, border: 'none', background: '#1a3055', color: 'white', fontSize: 13, fontWeight: 700, cursor: savingChannel || !editName.trim() ? 'default' : 'pointer', opacity: savingChannel || !editName.trim() ? 0.6 : 1 }}>
+              {savingChannel ? 'Saving…' : 'Save'}</button>
           </div>
         </div>
       </div>

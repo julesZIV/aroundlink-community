@@ -173,6 +173,13 @@ export function useChannels(
     return null
   }, [userId])
 
+  const updateChannel = useCallback(async (channelId: string, fields: { emoji?: string; name?: string; description?: string }): Promise<string | null> => {
+    const { data, error } = await supabase.from('channels').update(fields).eq('id', channelId).select().single()
+    if (error) { pushError(`Channel update error: ${error.message}`); return error.message }
+    if (data) setChannels(prev => prev.map(c => c.id === channelId ? data : c).sort((a, b) => a.name.localeCompare(b.name)))
+    return null
+  }, [])
+
   const editPost = useCallback(async (postId: string, newText: string): Promise<string | null> => {
     if (!userId) return 'Not logged in'
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, text: newText } : p))
@@ -272,7 +279,7 @@ export function useChannels(
   return {
     channels, myChannelIds: Array.from(myChannelIds), posts, uploads, loading,
     getPostsForChannel, getUploadsForChannel,
-    joinChannel, leaveChannel, sendMessage, uploadDoc, subscribeToChannel, createChannel,
+    joinChannel, leaveChannel, sendMessage, uploadDoc, subscribeToChannel, createChannel, updateChannel,
     toggleLike, addComment, deletePost, editPost,
   }
 }
