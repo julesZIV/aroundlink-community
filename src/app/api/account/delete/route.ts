@@ -4,7 +4,7 @@ import { createServerClient, createAdminClient } from '@/lib/supabase/server'
 /**
  * POST /api/account/delete
  * Supprime le compte de l'utilisateur connecté de façon sécurisée :
- * - Anonymise le profil (RGPD) : les posts restent mais l'auteur devient "Deleted Member"
+ * - Anonymise le profil (RGPD) : les posts restent mais l'auteur devient "Inactive Member"
  * - Change l'email et le mot de passe auth par des valeurs aléatoires (impossible de se reconnecter)
  * - Renvoie un email de confirmation via l'API admin
  */
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   // 2. Anonymiser le profil : garder la ligne en DB (les posts pointent vers cet id)
   //    Les données personnelles sont effacées → conformité RGPD
   await admin.from('profiles').update({
-    name:           'Deleted Member',
+    name:           'Inactive Member',
     first_name:     null,
     last_name:      null,
     avatar_url:     null,

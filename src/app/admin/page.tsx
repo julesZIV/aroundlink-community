@@ -344,7 +344,7 @@ export default function AdminPage() {
                               <div>
                                 <p className={`text-sm font-semibold ${m.is_anonymized ? 'text-slate-400 italic' : 'text-slate-800 group-hover:underline'}`}>
                                   {m.name} {isMe && <span className="text-xs text-blue-500">(you)</span>}
-                                  {m.is_anonymized && <span className="text-xs text-slate-400 ml-1">(deleted account)</span>}
+                                  {m.is_anonymized && <span className="text-xs text-slate-400 ml-1">(inactive)</span>}
                                 </p>
                                 <p className="text-xs text-slate-400">{m.is_anonymized ? '—' : m.email}</p>
                               </div>
@@ -715,7 +715,7 @@ export default function AdminPage() {
             <p className="text-lg font-black text-slate-800 mb-1">Delete this account?</p>
             <p className="text-sm text-slate-500 mb-4">
               Personal data of <strong>{confirmDelete.name}</strong> will be deleted.
-              Their posts and comments will remain visible under the name <em>"Deleted member"</em>.
+              Their posts and comments will remain visible under the name <em>"Inactive Member"</em>.
             </p>
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5">
               <p className="text-xs text-amber-700 font-semibold">⚠️ This action is irreversible.</p>
