@@ -8,6 +8,7 @@ import { useSidebarData } from '@/lib/hooks/useSidebarData'
 import { createClient } from '@/lib/supabase/client'
 import { isPushSupported, markPushAsked, PUSH_PROMPT_KEY } from '@/lib/push'
 import AvatarImg from '@/components/ui/AvatarImg'
+import { QRCodeCanvas } from 'qrcode.react'
 
 export default function ProfilePage() {
   const { user, profile, loading, emailVerified, updateProfile, signOut } = useAuth()
@@ -333,6 +334,35 @@ export default function ProfilePage() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
+  }
+
+  // QR code d'affiliation — téléchargement en PNG (QR + code en dessous)
+  const qrRef = useRef<HTMLDivElement>(null)
+  const handleDownloadQr = () => {
+    const canvas = qrRef.current?.querySelector('canvas')
+    if (!canvas) return
+    const exportCanvas = document.createElement('canvas')
+    const padding = 24
+    const labelHeight = 40
+    exportCanvas.width = canvas.width + padding * 2
+    exportCanvas.height = canvas.height + padding * 2 + labelHeight
+    const ctx = exportCanvas.getContext('2d')
+    if (!ctx) return
+    // Fond blanc
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height)
+    // QR code
+    ctx.drawImage(canvas, padding, padding)
+    // Code texte en dessous
+    ctx.fillStyle = '#1a3055'
+    ctx.font = 'bold 14px system-ui'
+    ctx.textAlign = 'center'
+    ctx.fillText(`Code: ${referralCode}`, exportCanvas.width / 2, canvas.height + padding + 24)
+    // Téléchargement
+    const link = document.createElement('a')
+    link.download = `aroundlink-ref-${referralCode}.png`
+    link.href = exportCanvas.toDataURL('image/png')
+    link.click()
   }
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -682,25 +712,36 @@ export default function ProfilePage() {
             Share your unique link — you earn <span className="font-semibold text-amber-600">150 Links</span> for every new member who signs up through your link.
           </p>
           {referralLink ? (
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-600 truncate select-all">
-                {referralLink}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+              <div ref={qrRef} style={{ padding: 16, background: 'white', borderRadius: 12, border: '1px solid #e5e7eb' }}>
+                <QRCodeCanvas value={referralLink} size={180} level="M" marginSize={0} />
               </div>
-              <button
-                onClick={handleCopy}
-                className="flex-shrink-0 px-3 py-2.5 rounded-xl text-xs font-bold border transition-all"
-                style={copied
-                  ? { background: '#16a34a', color: 'white', borderColor: '#16a34a' }
-                  : { background: 'white', color: '#1a3055', borderColor: '#e2e8f0' }}>
-                {copied ? '✓ Copied!' : '📋 Copy'}
-              </button>
+              <p className="text-xs text-slate-400 text-center">
+                Scan this QR code to join AroundLink Community
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={handleCopy}
+                  className="px-3 py-2.5 rounded-xl text-xs font-bold border transition-all"
+                  style={copied
+                    ? { background: '#16a34a', color: 'white', borderColor: '#16a34a' }
+                    : { background: 'white', color: '#1a3055', borderColor: '#e2e8f0' }}>
+                  {copied ? '✓ Copied!' : '📋 Copy link'}
+                </button>
+                <button
+                  onClick={handleDownloadQr}
+                  className="px-3 py-2.5 rounded-xl text-xs font-bold border transition-all"
+                  style={{ background: '#1a3055', color: 'white', borderColor: '#1a3055' }}>
+                  ⬇ Download QR
+                </button>
+              </div>
+              <p className="text-xs text-slate-400">
+                Code: <span className="font-mono font-semibold text-slate-600">{referralCode ?? '—'}</span>
+              </p>
             </div>
           ) : (
             <p className="text-xs text-slate-400 italic">Your referral code is being generated…</p>
           )}
-          <p className="text-xs text-slate-400 mt-2">
-            Code: <span className="font-mono font-semibold text-slate-600">{referralCode ?? '—'}</span>
-          </p>
 
           {/* Referred members list */}
           {referredUsers.length > 0 && (
