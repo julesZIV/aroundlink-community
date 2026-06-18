@@ -297,7 +297,7 @@ export default function ConversationPage() {
             {otherUserId && (
               <button onClick={() => router.push(`/profile/${otherUserId}`)}
                 style={{ background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-                Profil →
+                Profile →
               </button>
             )}
           </div>

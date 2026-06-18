@@ -189,7 +189,7 @@ export default function InstitutionVerificationPopup({ userId, email, institutio
             <input
               value={manualInput}
               onChange={e => setManualInput(e.target.value)}
-              placeholder="ex. Université Côte d'Azur"
+              placeholder="e.g. Université Côte d'Azur"
               autoFocus
               style={{
                 width: '100%', border: '1px solid #e2e8f0', borderRadius: 12,
