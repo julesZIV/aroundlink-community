@@ -255,7 +255,7 @@ export default function AdminPage() {
               { key: 'branding', label: '🎨 Branding',      always: false },
               { key: 'requests', label: '📬 Requests',      always: false },
               { key: 'matching', label: '🏛️ Institutions',  always: false },
-            ] as const).filter(t => t.always || myRole === 'admin').map(t => {
+            ] as const).filter(t => t.always || myRole === 'admin' || (t.key === 'requests' && myRole === 'moderator')).map(t => {
               const pendingCount = t.key === 'requests' ? requests.filter(r => r.status === 'pending').length : 0
               return (
                 <button key={t.key} onClick={() => setTab(t.key)}

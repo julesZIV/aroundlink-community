@@ -59,7 +59,8 @@ export default function InstitutionPage() {
   const router = useRouter()
   const supabase = createClient()
   const { profile } = useAuth()
-  const isAdmin = profile?.app_role === 'admin'
+  // Admins ET modérateurs peuvent gérer le logo de l'organisation
+  const canEditLogo = ['admin', 'moderator'].includes(profile?.app_role ?? '')
 
   const institutionName = decodeURIComponent(params.slug as string)
   const nameKey = institutionName.trim().toLowerCase()
@@ -189,7 +190,7 @@ export default function InstitutionPage() {
                       filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.25))',
                     }}>{uniMeta.flag}</span>
                   )}
-                  {isAdmin && (
+                  {canEditLogo && (
                     <>
                       <input
                         ref={logoInputRef}
@@ -255,7 +256,7 @@ export default function InstitutionPage() {
                       🌐 {uniMeta.website.replace(/^https?:\/\//, '')}
                     </a>
                   )}
-                  {isAdmin && (
+                  {canEditLogo && (
                     <p style={{ fontSize: 11, color: logoError ? '#dc2626' : '#94a3b8', margin: '8px 0 0' }}>
                       {logoError
                         ? logoError
