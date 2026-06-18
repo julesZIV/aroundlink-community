@@ -89,6 +89,7 @@ export default function AdminPage() {
   useEffect(() => {
     supabase.from('profiles')
       .select('id, name, email, institution, institution_verified, institution_domain, app_role, links, created_at, is_anonymized, avatar_url')
+      .eq('is_anonymized', false)
       .order('app_role')
       .order('name')
       .then(({ data, error }) => {
@@ -150,10 +151,8 @@ export default function AdminPage() {
     if (error) {
       pushError(`Could not delete account: ${error}`)
     } else {
-      setMembers(prev => prev.map(m => m.id === member.id
-        ? { ...m, name: 'Deleted member', email: '', institution: null, is_anonymized: true, avatar_url: null }
-        : m
-      ))
+      // Le compte est anonymisé → on le retire de la liste admin (les posts restent côté feed)
+      setMembers(prev => prev.filter(m => m.id !== member.id))
       pushSuccess(`Account anonymized — content preserved.`)
     }
     setAnonymizing(false)
