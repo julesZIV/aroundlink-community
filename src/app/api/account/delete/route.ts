@@ -23,11 +23,13 @@ export async function POST(req: NextRequest) {
   // 2. Anonymiser le profil : garder la ligne en DB (les posts pointent vers cet id)
   //    Les données personnelles sont effacées → conformité RGPD
   await admin.from('profiles').update({
-    name:         'Deleted Member',
-    first_name:   null,
-    last_name:    null,
-    avatar_url:   null,
-    institution:  null,
+    name:           'Deleted Member',
+    first_name:     null,
+    last_name:      null,
+    avatar_url:     null,
+    institution:    null,
+    university_id:  null,
+    is_anonymized:  true,
   } as unknown as Record<string, unknown>).eq('id', userId)
 
   // 3. Rendre le compte auth inaccessible (email + mot de passe aléatoires)

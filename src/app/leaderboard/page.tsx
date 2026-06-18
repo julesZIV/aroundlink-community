@@ -66,6 +66,7 @@ export default function LeaderboardPage() {
       const { data } = await supabase
         .from('profiles')
         .select('id, name, first_name, last_name, avatar_url, institution, links')
+        .eq('is_anonymized', false)
         .not('links', 'is', null)
         .gt('links', 0)
         .order('links', { ascending: false })

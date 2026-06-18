@@ -7,7 +7,7 @@ import type { Profile } from '@/lib/supabase/supabase/types'
 import AvatarImg from '@/components/ui/AvatarImg'
 
 type Contributor = { id: string; name: string | null; first_name: string | null; last_name: string | null; institution: string | null; links: number; avatar_url: string | null }
-type Institution = { name: string; totalLinks: number; memberCount: number }
+type Institution = { name: string; totalLinks: number; memberCount: number; logoUrl: string | null }
 
 const RANK_ICON = ['🥇','🥈','🥉']
 const PALETTE = ['#1a3055','#2d4f7f','#0f4c81','#1e6091','#184e77']
@@ -35,15 +35,26 @@ function UniIcon({ size = 14 }: { size?: number }) {
 export default function RightPanel({ profile }: { profile: Profile | null }) {
   const router = useRouter()
   const [contributors, setContributors] = useState<Contributor[]>([])
+  const [logos, setLogos] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    createClient()
+    const supabase = createClient()
+    supabase
       .from('profiles')
       .select('id, name, first_name, last_name, institution, links, avatar_url')
+      .eq('is_anonymized', false)
       .order('links', { ascending: false })
       .gt('links', 0)
       .limit(100)
       .then(({ data }) => { if (data) setContributors(data as Contributor[]) })
+    // Logos d'organisations uploadés par les admins (clés = nom normalisé)
+    supabase.from('org_logos').select('name_key, logo_url').then(({ data }) => {
+      if (data) {
+        const byKey: Record<string, string> = {}
+        for (const l of data) byKey[l.name_key] = l.logo_url
+        setLogos(byKey)
+      }
+    })
   }, [])
 
   const institutions = useMemo<Institution[]>(() => {
@@ -51,12 +62,12 @@ export default function RightPanel({ profile }: { profile: Profile | null }) {
     for (const m of contributors) {
       if (!m.institution?.trim()) continue
       const key = m.institution.trim()
-      if (!map[key]) map[key] = { name: key, totalLinks: 0, memberCount: 0 }
+      if (!map[key]) map[key] = { name: key, totalLinks: 0, memberCount: 0, logoUrl: logos[key.toLowerCase()] ?? null }
       map[key].totalLinks += m.links
       map[key].memberCount++
     }
     return Object.values(map).sort((a, b) => b.totalLinks - a.totalLinks)
-  }, [contributors])
+  }, [contributors, logos])
 
   return (
     <aside className="right-panel">
@@ -98,10 +109,13 @@ export default function RightPanel({ profile }: { profile: Profile | null }) {
               <span style={{ fontSize: 11, width: 16, fontWeight: 800, color: '#94a3b8', textAlign: 'center', flexShrink: 0 }}>{RANK_ICON[i] ?? `#${i+1}`}</span>
               <div style={{
                 width: 24, height: 24, borderRadius: 7, flexShrink: 0,
-                background: PALETTE[i % PALETTE.length],
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: inst.logoUrl ? 'white' : PALETTE[i % PALETTE.length],
+                border: inst.logoUrl ? '1px solid #e2e8f0' : 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
               }}>
-                <UniIcon size={14} />
+                {inst.logoUrl
+                  ? <img src={inst.logoUrl} alt={inst.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  : <UniIcon size={14} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.3 }}>

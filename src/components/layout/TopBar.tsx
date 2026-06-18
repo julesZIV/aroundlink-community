@@ -66,6 +66,7 @@ export default function TopBar({
     const { data } = await supabase
       .from('profiles')
       .select('id, name, first_name, last_name, institution, avatar_url')
+      .eq('is_anonymized', false)
       .or(`name.ilike.%${safeQ}%,first_name.ilike.%${safeQ}%,last_name.ilike.%${safeQ}%`)
       .limit(6)
     setUserResults((data ?? []) as UserResult[])

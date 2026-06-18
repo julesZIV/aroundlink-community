@@ -30,6 +30,7 @@ export default function UniversityPage() {
         .from('profiles')
         .select('id, name, first_name, last_name, avatar_url, role')
         .eq('university_id', Number(id))
+        .eq('is_anonymized', false)
         .limit(20),
     ]).then(([{ data: uniData }, { data: memberData }]) => {
       setUni(uniData ?? null)

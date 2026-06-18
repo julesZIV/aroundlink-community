@@ -127,8 +127,8 @@ export const IDW_SESSIONS: Session[] = [
     type: 'pitch',
     title: 'EdTech Companies Pitch Session',
     speakers: [],
-    description: 'EdTech companies pitch their solutions to the audience.',
-    location: null,
+    description: 'EdTech companies pitch their solutions to the audience. Participants: Duolingo English Test, AroundLink, E-cole, Verifdiploma, ReadSpeaker, Agel Partners, Connectivity, RapidMooc.',
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_mon_05',
@@ -167,12 +167,12 @@ export const IDW_SESSIONS: Session[] = [
     title: 'Round Table — Universities as Engines of Digital Entrepreneurship and Future Skills for a Global Workforce',
     speakers: [
       { name: 'Jeisson Higuera', role: 'Panellist', institution: 'University of Seville' },
-      { name: 'Juan Luis Blanco Guzman', role: 'Panellist', institution: 'University of Sevilla' },
-      { name: 'Simon Petit', role: 'Panellist', institution: 'AroundLink' },
+      { name: 'Juan Luis Blanco Guzman', role: 'Panellist', institution: 'University of Seville' },
+      { name: 'Alexis Tisseron', role: 'Panellist', institution: 'AroundLink' },
       { name: 'Julia Reinhard', role: 'Moderator', institution: 'Haaga Helia University of Applied Sciences — Innovation Hub Manager' },
     ],
     description: 'This round table explores how universities can act as global hubs for digital entrepreneurship by developing cross-campus incubators that connect students worldwide and support digital-first startups with international reach. It will also address the challenges student entrepreneurs face while highlighting how institutions can foster collaboration, innovation, and global readiness.',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_mon_08',
@@ -198,8 +198,9 @@ export const IDW_SESSIONS: Session[] = [
     title: 'Round Table — AI-Powered Education: Global Opportunities, Societal Risks, and Ethical Implications',
     speakers: [
       { name: 'Lyuba Stafyeyeva', role: 'Panellist', institution: "MCI | The Entrepreneurial School®" },
-      { name: 'Trine Jensen', role: 'Panellist', institution: 'International Association of Universities (IAU)' },
-      { name: 'Elie Bechara', role: 'Panellist', institution: 'Duolingo' },
+      { name: 'Masha Kostromitina', role: 'Panellist', institution: 'Duolingo' },
+      { name: 'Hélène Duranton', role: 'Panellist', institution: 'Duolingo / Montpellier Business School' },
+      { name: 'Sally Ott Lacoste', role: 'Panellist', institution: 'Verifdiploma' },
       { name: 'Apostolos Altiparmakis', role: 'Moderator', institution: 'Syncnify — Project Manager and Co-founder' },
     ],
     description: 'This round table examines how AI is reshaping global student competitiveness and redefining the skills needed to succeed in an interconnected world. It will explore the balance between innovation and equity, questioning who benefits first from AI-driven education and who risks being left behind. The discussion will also address government readiness and the need for cross-border standards to ensure the responsible, inclusive, and coordinated use of AI in education.',
@@ -222,7 +223,7 @@ export const IDW_SESSIONS: Session[] = [
   {
     id: 's_tue_di_01',
     day: '2026-06-23',
-    time_start: '10:00',
+    time_start: '10:30',
     time_end: '11:30',
     tracks: ['di'],
     common: false,
@@ -589,7 +590,7 @@ export const IDW_SESSIONS: Session[] = [
     type: 'workshop',
     title: 'Culture Transfer Online vs In Person',
     speakers: [
-      { name: 'Natalia Timus', role: 'Facilitator', institution: "Université Côte d'Azur — Manager of International Learning Experiences" },
+      { name: 'Natalia Timuș', role: 'Facilitator', institution: "Université Côte d'Azur — Manager of International Learning Experiences" },
     ],
     description: 'This workshop focuses on increasing the understanding of culture transfer and intercultural competence in the context of in-person and online learning. It aims at analysing the advantages and disadvantages of the intercultural co-creation process. Also, the workshop shares good practices on culture transfer in various learning environments and provides a hands-on activity for participants\' engagement in the transfer of individual intercultural knowledge and experience.',
     location: null,
