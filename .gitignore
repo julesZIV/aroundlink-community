@@ -21,3 +21,10 @@ npm-debug.log*
 *.pem
 node_modules/
 .vercel
+
+# typescript (générés par Next.js — ne pas committer)
+*.tsbuildinfo
+next-env.d.ts
+
+# config locale de l'agent (dev)
+.claude/

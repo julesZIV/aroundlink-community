@@ -82,6 +82,11 @@ function AuthForm() {
   }, [])
 
   async function handleLinkedIn() {
+    // Same ToS gate as email signup — when creating an account, the terms must be accepted.
+    if (mode === 'signup' && !acceptedTerms) {
+      setError('You must accept the terms of use to create an account.')
+      return
+    }
     setLinkedinLoading(true)
     setError('')
     try {
@@ -178,6 +183,10 @@ function AuthForm() {
         if (!acceptedTerms) {
           throw new Error('You must accept the terms of use to create an account.')
         }
+        // GDPR consent proof — recorded at the moment the user accepts the ToS.
+        // Passed as user metadata so the auth/callback can persist it on the profile
+        // once a session exists (email confirmation is enabled).
+        const acceptedAt = new Date().toISOString()
         const { data, error } = await supabase.auth.signUp({
           email, password,
           options: {
@@ -185,6 +194,8 @@ function AuthForm() {
               first_name: firstName.trim(),
               last_name:  lastName.trim(),
               name:       `${firstName.trim()} ${lastName.trim()}`,
+              terms_version:     '1.0',
+              terms_accepted_at: acceptedAt,
             }
           }
         })
@@ -209,6 +220,8 @@ function AuthForm() {
               first_name: firstName.trim(),
               last_name:  lastName.trim(),
               name:       `${firstName.trim()} ${lastName.trim()}`,
+              terms_version:     '1.0',
+              terms_accepted_at: acceptedAt,
             }).eq('id', data.user.id)
           }
           router.push('/feed')
@@ -283,6 +296,30 @@ function AuthForm() {
               </button>
             ))}
           </div>
+
+          {/* Terms acceptance — governs BOTH LinkedIn and email sign-up */}
+          {mode === 'signup' && (
+            <label className="flex items-start gap-2.5 cursor-pointer mb-4">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={e => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 flex-shrink-0 accent-[#1a3055]"
+                style={{ width: 15, height: 15 }}
+              />
+              <span className="text-xs text-slate-500 leading-relaxed">
+                I have read and accept the{' '}
+                <a href="/cgu" target="_blank" rel="noopener" style={{ color: '#1a3055', fontWeight: 600, textDecoration: 'underline' }}>
+                  terms of use
+                </a>
+                {' '}and the{' '}
+                <a href="/privacy" target="_blank" rel="noopener" style={{ color: '#1a3055', fontWeight: 600, textDecoration: 'underline' }}>
+                  privacy policy
+                </a>
+                . <span className="text-red-400">*</span>
+              </span>
+            </label>
+          )}
 
           {/* LinkedIn SSO */}
           <button
@@ -426,32 +463,9 @@ function AuthForm() {
             )}
 
             {mode === 'signup' && (
-              <>
-                {/* CGU acceptance — required */}
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={acceptedTerms}
-                    onChange={e => setAcceptedTerms(e.target.checked)}
-                    className="mt-0.5 flex-shrink-0 accent-[#1a3055]"
-                    style={{ width: 15, height: 15 }}
-                  />
-                  <span className="text-xs text-slate-500 leading-relaxed">
-                    I have read and accept the{' '}
-                    <a href="/cgu" target="_blank" rel="noopener" style={{ color: '#1a3055', fontWeight: 600, textDecoration: 'underline' }}>
-                      terms of use
-                    </a>
-                    {' '}and the{' '}
-                    <a href="/privacy" target="_blank" rel="noopener" style={{ color: '#1a3055', fontWeight: 600, textDecoration: 'underline' }}>
-                      privacy policy
-                    </a>
-                    . <span className="text-red-400">*</span>
-                  </span>
-                </label>
-                <p className="text-xs text-slate-400 bg-slate-50 rounded-xl px-3 py-2.5 leading-relaxed">
-                  💡 You can complete your profile (institution, LinkedIn…) once logged in from the <strong>My profile</strong> section.
-                </p>
-              </>
+              <p className="text-xs text-slate-400 bg-slate-50 rounded-xl px-3 py-2.5 leading-relaxed">
+                💡 You can complete your profile (institution, LinkedIn…) once logged in from the <strong>My profile</strong> section.
+              </p>
             )}
 
             {error && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">⚠️ {error}</p>}

@@ -5,6 +5,7 @@ import AppShell from '@/components/layout/AppShell'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { getOrCreateConversation } from '@/lib/hooks/useDirectMessages'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 type PublicProfile = {
   id: string; name: string | null; first_name: string | null; last_name: string | null
@@ -176,9 +177,7 @@ export default function UserProfilePage() {
             <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', boxShadow: '0 1px 6px rgba(0,0,0,0.05)', padding: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
                 <div style={{ width: 72, height: 72, borderRadius: 18, background: '#1a3055', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 900, color: 'white', flexShrink: 0, overflow: 'hidden' }}>
-                  {profile.avatar_url
-                    ? <img src={profile.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : initials}
+                  <AvatarImg src={profile.avatar_url} alt={displayName} fallback={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1a3055', margin: 0 }}>{displayName}</h1>
@@ -249,9 +248,7 @@ export default function UserProfilePage() {
                       <button key={r.id} onClick={() => router.push(`/profile/${r.id}`)}
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 12, background: '#f8fafc', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
                         <div style={{ width: 36, height: 36, borderRadius: 10, background: '#1a3055', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'white', flexShrink: 0, overflow: 'hidden' }}>
-                          {r.avatar_url
-                            ? <img src={r.avatar_url} alt={rName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            : rInit}
+                          <AvatarImg src={r.avatar_url} alt={rName} fallback={rInit} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontSize: 13, fontWeight: 600, color: '#1a3055', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rName}</p>

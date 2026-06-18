@@ -1,8 +1,11 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { STORAGE } from '@/lib/storage'
 import AppShell from '@/components/layout/AppShell'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 function UniIcon({ size = 32, color = 'white' }: { size?: number; color?: string }) {
   return (
@@ -55,11 +58,48 @@ export default function InstitutionPage() {
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
+  const { profile } = useAuth()
+  const isAdmin = profile?.app_role === 'admin'
 
   const institutionName = decodeURIComponent(params.slug as string)
+  const nameKey = institutionName.trim().toLowerCase()
   const [members, setMembers] = useState<Member[]>([])
   const [uniMeta, setUniMeta] = useState<UniMeta | null>(null)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [logoError, setLogoError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoError(null)
+    if (!file.type.startsWith('image/')) { setLogoError('Please choose an image file.'); return }
+    if (file.size > 5 * 1024 * 1024) { setLogoError('Image must be under 5 MB.'); return }
+    setUploadingLogo(true)
+    try {
+      const ext = file.name.split('.').pop() ?? 'png'
+      const safe = encodeURIComponent(nameKey).replace(/%/g, '_')
+      // Cache-bust the path so the new logo shows immediately
+      const path = `${safe}/logo-${Date.now()}.${ext}`
+      const publicUrl = await STORAGE.upload('org-logos', file, path)
+      const { error } = await supabase.from('org_logos').upsert({
+        name_key: nameKey,
+        name: institutionName,
+        logo_url: publicUrl,
+        updated_by: profile?.id ?? null,
+        updated_at: new Date().toISOString(),
+      })
+      if (error) throw error
+      setLogoUrl(publicUrl)
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : 'Upload failed.')
+    } finally {
+      setUploadingLogo(false)
+      if (logoInputRef.current) logoInputRef.current.value = ''
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -81,6 +121,14 @@ export default function InstitutionPage() {
         institution: p.institution,
       }))
       setMembers(mems)
+
+      // Fetch a custom org logo if an admin uploaded one
+      const { data: logoRow } = await supabase
+        .from('org_logos')
+        .select('logo_url')
+        .eq('name_key', nameKey)
+        .maybeSingle()
+      setLogoUrl(logoRow?.logo_url ?? null)
 
       // Fetch university meta from first member's university_id
       const uniId = (profiles ?? []).find(p => p.university_id)
@@ -121,21 +169,50 @@ export default function InstitutionPage() {
               background: 'white', borderRadius: 20, border: '1px solid #e2e8f0',
               padding: '24px', marginBottom: 20,
             }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 18 }}>
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <div style={{
-                    width: 64, height: 64, borderRadius: 16,
-                    background: PALETTE[0], display: 'flex', alignItems: 'center',
-                    justifyContent: 'center',
+                    width: 88, height: 88, borderRadius: 20,
+                    background: logoUrl ? 'white' : PALETTE[0],
+                    border: logoUrl ? '1px solid #e2e8f0' : 'none',
+                    display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', overflow: 'hidden',
                   }}>
-                    <UniIcon size={38} color="white" />
+                    {logoUrl
+                      ? <img src={logoUrl} alt={institutionName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      : <UniIcon size={52} color="white" />}
                   </div>
                   {uniMeta?.flag && (
                     <span style={{
                       position: 'absolute', bottom: -5, right: -8,
-                      fontSize: 22, lineHeight: 1,
+                      fontSize: 24, lineHeight: 1,
                       filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.25))',
                     }}>{uniMeta.flag}</span>
+                  )}
+                  {isAdmin && (
+                    <>
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        style={{ display: 'none' }}
+                      />
+                      <button
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={uploadingLogo}
+                        title={logoUrl ? 'Change the logo' : 'Add a logo'}
+                        style={{
+                          position: 'absolute', bottom: -8, left: -8,
+                          width: 30, height: 30, borderRadius: '50%',
+                          background: '#1a3055', color: 'white',
+                          border: '2px solid white', cursor: uploadingLogo ? 'wait' : 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 13, boxShadow: '0 2px 6px rgba(0,0,0,0.2)', padding: 0,
+                        }}>
+                        {uploadingLogo ? '…' : '📷'}
+                      </button>
+                    </>
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -178,6 +255,15 @@ export default function InstitutionPage() {
                       🌐 {uniMeta.website.replace(/^https?:\/\//, '')}
                     </a>
                   )}
+                  {isAdmin && (
+                    <p style={{ fontSize: 11, color: logoError ? '#dc2626' : '#94a3b8', margin: '8px 0 0' }}>
+                      {logoError
+                        ? logoError
+                        : uploadingLogo
+                          ? 'Uploading logo…'
+                          : '📷 Click the camera to set this organisation’s logo (admin)'}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -208,9 +294,7 @@ export default function InstitutionPage() {
                       justifyContent: 'center', fontSize: 13, fontWeight: 700,
                       color: 'white', overflow: 'hidden',
                     }}>
-                      {m.avatar_url
-                        ? <img src={m.avatar_url} alt={getDisplayName(m)} style={{ width: 40, height: 40, objectFit: 'cover' }} />
-                        : getInitials(m)}
+                      <AvatarImg src={m.avatar_url} alt={getDisplayName(m)} fallback={getInitials(m)} style={{ width: 40, height: 40, objectFit: 'cover' }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: 14, fontWeight: 700, color: '#1a3055', margin: 0 }}>

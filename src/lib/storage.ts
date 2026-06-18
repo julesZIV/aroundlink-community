@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/client'
 
 export const STORAGE = {
   async upload(
-    bucket: 'avatars' | 'feed-media' | 'channel-media' | 'documents',
+    bucket: 'avatars' | 'feed-media' | 'channel-media' | 'documents' | 'org-logos',
     file: File,
     path: string
   ): Promise<string> {

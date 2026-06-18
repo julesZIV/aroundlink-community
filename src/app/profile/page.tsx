@@ -7,6 +7,7 @@ import { useStats } from '@/lib/hooks/useStats'
 import { useSidebarData } from '@/lib/hooks/useSidebarData'
 import { createClient } from '@/lib/supabase/client'
 import { isPushSupported, markPushAsked, PUSH_PROMPT_KEY } from '@/lib/push'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 export default function ProfilePage() {
   const { user, profile, loading, emailVerified, updateProfile, signOut } = useAuth()
@@ -389,9 +390,7 @@ export default function ProfilePage() {
             <div className="relative flex-shrink-0">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white overflow-hidden"
                 style={{ background: '#1a3055' }}>
-                {profile?.avatar_url
-                  ? <img src={profile?.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : initials}
+                <AvatarImg src={profile?.avatar_url} alt={displayName} fallback={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             </div>
             <div className="flex-1">
@@ -510,9 +509,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black text-white overflow-hidden flex-shrink-0"
                 style={{ background: '#1a3055' }}>
-                {profile?.avatar_url
-                  ? <img src={profile?.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : initials}
+                <AvatarImg src={profile?.avatar_url} alt={displayName} fallback={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <div>
                 <input
@@ -722,9 +719,7 @@ export default function ProfilePage() {
                       className="flex items-center gap-3 w-full text-left hover:bg-slate-50 rounded-xl px-1 py-1 -mx-1 transition-colors">
                       <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white flex-shrink-0 overflow-hidden"
                         style={{ background: '#1a3055' }}>
-                        {u.avatar_url
-                          ? <img src={u.avatar_url} alt={uName} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
-                          : uInitials}
+                        <AvatarImg src={u.avatar_url} alt={uName} fallback={uInitials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-slate-800 truncate">{uName}</p>

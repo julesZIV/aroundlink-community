@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AppShell from '@/components/layout/AppShell'
 import { useAuth } from '@/lib/hooks/useAuth'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 type Member = {
   id: string
@@ -20,6 +21,7 @@ type Institution = {
   totalLinks: number
   memberCount: number
   topMembers: Member[]
+  logoUrl: string | null
 }
 
 function getDisplayName(m: Member) {
@@ -54,6 +56,7 @@ export default function LeaderboardPage() {
   const supabase = createClient()
   const { user } = useAuth()
   const [members, setMembers] = useState<Member[]>([])
+  const [logos, setLogos] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'members' | 'institutions'>('members')
 
@@ -68,6 +71,13 @@ export default function LeaderboardPage() {
         .order('links', { ascending: false })
         .limit(200)
       setMembers((data ?? []) as Member[])
+
+      // Custom org logos uploaded by admins, keyed by normalised institution name
+      const { data: logoRows } = await supabase.from('org_logos').select('name_key, logo_url')
+      const byKey: Record<string, string> = {}
+      for (const l of logoRows ?? []) byKey[l.name_key] = l.logo_url
+      setLogos(byKey)
+
       setLoading(false)
     }
     load()
@@ -81,13 +91,13 @@ export default function LeaderboardPage() {
     for (const m of members) {
       if (!m.institution?.trim()) continue
       const key = m.institution.trim()
-      if (!map[key]) map[key] = { name: key, totalLinks: 0, memberCount: 0, topMembers: [] }
+      if (!map[key]) map[key] = { name: key, totalLinks: 0, memberCount: 0, topMembers: [], logoUrl: logos[key.toLowerCase()] ?? null }
       map[key].totalLinks += m.links
       map[key].memberCount++
       if (map[key].topMembers.length < 3) map[key].topMembers.push(m)
     }
     return Object.values(map).sort((a, b) => b.totalLinks - a.totalLinks)
-  }, [members])
+  }, [members, logos])
 
   // My institution rank
   const myInstitution = user ? members.find(m => m.id === user.id)?.institution?.trim() : null
@@ -192,7 +202,7 @@ export default function LeaderboardPage() {
                           fontSize: rank === 0 ? 15 : 12, fontWeight: 800, color: 'white', overflow: 'hidden',
                           border: isMe ? '3px solid #3b82f6' : `3px solid ${rank === 0 ? '#fbbf24' : rank === 1 ? '#94a3b8' : '#cd7c2e'}`,
                         }}>
-                          {m.avatar_url ? <img src={m.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : getInitials(m)}
+                          <AvatarImg src={m.avatar_url} alt="" fallback={getInitials(m)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                         <span style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', fontSize: 16 }}>{MEDAL[rank]}</span>
                       </div>
@@ -238,7 +248,7 @@ export default function LeaderboardPage() {
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 12, fontWeight: 800, color: 'white', overflow: 'hidden',
                       }}>
-                        {m.avatar_url ? <img src={m.avatar_url} alt="" style={{ width: 36, height: 36, objectFit: 'cover' }} /> : getInitials(m)}
+                        <AvatarImg src={m.avatar_url} alt="" fallback={getInitials(m)} style={{ width: 36, height: 36, objectFit: 'cover' }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#1a3055', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -302,11 +312,13 @@ export default function LeaderboardPage() {
                       <div style={{ position: 'relative', marginBottom: 6 }}>
                         <div style={{
                           width: rank === 0 ? 56 : 44, height: rank === 0 ? 56 : 44,
-                          borderRadius: 16, background: PALETTE[rank % PALETTE.length],
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          borderRadius: 16, background: inst.logoUrl ? 'white' : PALETTE[rank % PALETTE.length],
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
                           border: isMyInst ? '3px solid #22c55e' : `3px solid ${rank === 0 ? '#fbbf24' : rank === 1 ? '#94a3b8' : '#cd7c2e'}`,
                         }}>
-                          <UniIcon size={rank === 0 ? 28 : 22} />
+                          {inst.logoUrl
+                            ? <img src={inst.logoUrl} alt={inst.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            : <UniIcon size={rank === 0 ? 28 : 22} />}
                         </div>
                         <span style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', fontSize: 16 }}>{MEDAL[rank]}</span>
                       </div>
@@ -349,13 +361,16 @@ export default function LeaderboardPage() {
                       {medal ?? `#${i + 1}`}
                     </span>
 
-                    {/* Icon */}
+                    {/* Icon / logo */}
                     <div style={{
                       width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-                      background: PALETTE[i % PALETTE.length],
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: inst.logoUrl ? 'white' : PALETTE[i % PALETTE.length],
+                      border: inst.logoUrl ? '1px solid #e2e8f0' : 'none',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
                     }}>
-                      <UniIcon size={22} />
+                      {inst.logoUrl
+                        ? <img src={inst.logoUrl} alt={inst.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        : <UniIcon size={22} />}
                     </div>
 
                     {/* Info */}
@@ -375,7 +390,7 @@ export default function LeaderboardPage() {
                               fontSize: 7, fontWeight: 800, color: 'white', overflow: 'hidden',
                               position: 'relative', zIndex: 3 - mi,
                             }}>
-                              {m.avatar_url ? <img src={m.avatar_url} alt="" style={{ width: 18, height: 18, objectFit: 'cover' }} /> : getInitials(m)[0]}
+                              <AvatarImg src={m.avatar_url} alt="" fallback={getInitials(m)[0]} style={{ width: 18, height: 18, objectFit: 'cover' }} />
                             </div>
                           ))}
                         </div>

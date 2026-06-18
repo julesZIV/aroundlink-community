@@ -26,15 +26,16 @@ export default function PushPrompt({ userId, onDone }: Props) {
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9990,
       background: 'rgba(0,0,0,0.5)',
-      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-      padding: '0 0 env(safe-area-inset-bottom)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 16,
     }}>
       <div style={{
         background: 'white',
-        borderRadius: '24px 24px 0 0',
-        padding: '28px 24px 32px',
+        borderRadius: 24,
+        padding: '28px 24px 28px',
         width: '100%', maxWidth: 480,
-        boxShadow: '0 -8px 40px rgba(0,0,0,0.15)',
+        maxHeight: '90vh', overflowY: 'auto',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
       }}>
         {/* Bell icon */}
         <div style={{
@@ -49,12 +50,29 @@ export default function PushPrompt({ userId, onDone }: Props) {
           </svg>
         </div>
 
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1a3055', textAlign: 'center', margin: '0 0 8px' }}>
-          Enable notifications
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1a3055', textAlign: 'center', margin: '0 0 6px' }}>
+          Stay in the loop during IDW26 🔔
         </h2>
-        <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', lineHeight: 1.6, margin: '0 0 24px' }}>
-          Receive a notification when you have a new message, a mention, or a comment on your post.
+        <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', lineHeight: 1.6, margin: '0 0 18px' }}>
+          Turn on notifications so you never miss a beat of the week:
         </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '0 0 22px' }}>
+          {[
+            { icon: '📅', title: 'Agenda reminders', text: 'A nudge before each session starts' },
+            { icon: '📣', title: 'Live news & announcements', text: 'Program changes and updates in real time' },
+            { icon: '📎', title: 'Materials & supports', text: 'Get notified when slides and docs are shared' },
+            { icon: '🤝', title: 'Stay connected', text: 'Messages from the people you meet here' },
+          ].map(b => (
+            <div key={b.title} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <span style={{ fontSize: 20, lineHeight: 1.2, flexShrink: 0 }}>{b.icon}</span>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#1a3055' }}>{b.title}</p>
+                <p style={{ margin: '1px 0 0', fontSize: 12, color: '#64748b', lineHeight: 1.45 }}>{b.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <button
           onClick={handleEnable}

@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import MentionInput from '@/components/ui/MentionInput'
 import { renderMentions } from '@/components/ui/renderMentions'
 import ImageLightbox from '@/components/ui/ImageLightbox'
-import ShareButton from '@/components/ui/ShareButton'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 // Minimalist SVG icons (no emoji)
 const IconImage = () => (
@@ -390,9 +390,7 @@ export default function ChannelDetailPage() {
                     className="flex items-center gap-2 w-full text-left hover:bg-slate-50 rounded-lg px-1 py-0.5 transition-colors">
                     <span style={{ fontSize: 13, width: 18, flexShrink: 0, textAlign: 'center' }}>{medals[idx]}</span>
                     <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 overflow-hidden" style={{ background: '#1a3055' }}>
-                      {p?.avatar_url
-                        ? <img src={p.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : initials2}
+                      <AvatarImg src={p?.avatar_url} alt={displayName} fallback={initials2} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <p className="text-xs font-semibold text-slate-700 truncate flex-1 leading-tight">{displayName}</p>
                     <span style={{ fontSize: 10, fontWeight: 700, color: '#64748b', flexShrink: 0 }}>{count} msg</span>
@@ -431,9 +429,7 @@ export default function ChannelDetailPage() {
                   onClick={() => router.push(`/profile/${m.user_id}`)}
                   className="flex items-center gap-2 w-full text-left hover:bg-slate-50 rounded-lg px-1 py-0.5 transition-colors cursor-pointer">
                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 overflow-hidden" style={{ background: '#1a3055' }}>
-                    {p?.avatar_url
-                      ? <img src={p.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
-                      : initials2}
+                    <AvatarImg src={p?.avatar_url} alt={displayName} fallback={initials2} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1 flex-wrap">
@@ -606,9 +602,7 @@ export default function ChannelDetailPage() {
                             style={{ background: 'none', border: 'none', padding: 0, cursor: post.user_id !== user?.id ? 'pointer' : 'default', flexShrink: 0 }}>
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white overflow-hidden"
                               style={{ background: '#1a3055' }}>
-                              {post.profiles?.avatar_url
-                                ? <img src={post.profiles?.avatar_url} alt={post.profiles?.name ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                : av}
+                              <AvatarImg src={post.profiles?.avatar_url} alt={post.profiles?.name ?? ''} fallback={av} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             </div>
                           </button>
                           <div className="flex-1 min-w-0">
@@ -623,20 +617,6 @@ export default function ChannelDetailPage() {
                                 {new Date(post.created_at).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
                               </span>
                               <div className="ml-auto flex items-center gap-1">
-                                <ShareButton
-                                  text={post.text ?? ''}
-                                  postData={{
-                                    text:        post.text,
-                                    mediaUrl:    post.media_url,
-                                    mediaType:   post.media_type,
-                                    mediaName:   post.media_name,
-                                    authorName:  post.profiles
-                                      ? `${post.profiles?.first_name ?? ''} ${post.profiles?.last_name ?? ''}`.trim() || post.profiles?.name || 'Member'
-                                      : 'Member',
-                                    institution: null,
-                                    createdAt:   post.created_at,
-                                  }}
-                                />
                                 {post.user_id === user?.id && (
                                   <div style={{ position: 'relative' }}>
                                     <button
@@ -698,7 +678,7 @@ export default function ChannelDetailPage() {
                                 </div>
                               </div>
                             ) : (
-                              post.text && <p className="text-sm text-slate-700 leading-relaxed">{renderMentions(post.text)}</p>
+                              post.text && <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{renderMentions(post.text)}</p>
                             )}
                             {post.media_url && (
                               post.media_type === 'image'
@@ -739,9 +719,7 @@ export default function ChannelDetailPage() {
                                         style={{ background: 'none', border: 'none', padding: 0, cursor: c.user_id && c.user_id !== user?.id ? 'pointer' : 'default', flexShrink: 0 }}>
                                         <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white overflow-hidden"
                                           style={{ background: '#1a3055' }}>
-                                          {c.profiles?.avatar_url
-                                            ? <img src={c.profiles?.avatar_url} alt={c.profiles?.name ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            : cAv}
+                                          <AvatarImg src={c.profiles?.avatar_url} alt={c.profiles?.name ?? ''} fallback={cAv} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         </div>
                                       </button>
                                       <div className="flex-1 bg-slate-50 rounded-xl px-3 py-2">
@@ -749,7 +727,7 @@ export default function ChannelDetailPage() {
                                           className={`text-xs font-semibold text-slate-700 ${c.user_id && c.user_id !== user?.id ? 'cursor-pointer hover:underline' : ''}`}>
                                           {c.profiles?.name ?? 'Member'}{' '}
                                         </span>
-                                        <span className="text-xs text-slate-600">{renderMentions(c.text)}</span>
+                                        <span className="text-xs text-slate-600 whitespace-pre-wrap">{renderMentions(c.text)}</span>
                                       </div>
                                     </div>
                                   )
@@ -805,9 +783,7 @@ export default function ChannelDetailPage() {
                       {/* Avatar */}
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 overflow-hidden"
                         style={{ background: '#1a3055' }}>
-                        {profile?.avatar_url
-                          ? <img src={profile?.avatar_url} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          : initials}
+                        <AvatarImg src={profile?.avatar_url} alt={initials} fallback={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                       {/* Text input */}
                       <div className="flex-1 min-w-0">
@@ -932,9 +908,7 @@ export default function ChannelDetailPage() {
                         <button key={m.user_id} onClick={() => router.push(`/profile/${m.user_id}`)}
                           className="flex items-center gap-3 w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
                           <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 overflow-hidden" style={{ background: '#1a3055' }}>
-                            {p?.avatar_url
-                              ? <img src={p.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              : initials2}
+                            <AvatarImg src={p?.avatar_url} alt={displayName} fallback={initials2} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">

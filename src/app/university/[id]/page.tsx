@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import { createClient } from '@/lib/supabase/client'
 import type { University } from '@/lib/supabase/supabase/types'
+import AvatarImg from '@/components/ui/AvatarImg'
 
 const PALETTE = ['#1a3055','#2d4f7f','#0f4c81','#1e6091','#184e77','#1b4332','#6b2737','#7b3f00']
 
@@ -142,10 +143,7 @@ export default function UniversityPage() {
                     justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'white',
                     overflow: 'hidden',
                   }}>
-                    {m.avatar_url
-                      ? <img src={m.avatar_url} alt={getDisplayName(m)} style={{ width: 36, height: 36, objectFit: 'cover' }} />
-                      : getInitials(m)
-                    }
+                    <AvatarImg src={m.avatar_url} alt={getDisplayName(m)} fallback={getInitials(m)} style={{ width: 36, height: 36, objectFit: 'cover' }} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-800 truncate">{getDisplayName(m)}</p>

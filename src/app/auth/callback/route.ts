@@ -73,9 +73,58 @@ export async function GET(request: NextRequest) {
         updates.name       = full
       }
 
-      // Avatar
-      if (meta.avatar_url || meta.picture) {
-        updates.avatar_url = meta.avatar_url ?? meta.picture
+      // Avatar — LinkedIn renvoie une URL signée TEMPORAIRE (media.licdn.com)
+      // qui expire en quelques semaines (→ HTTP 403, photo cassée). On télécharge
+      // donc l'image une fois et on l'héberge sur Supabase pour qu'elle soit
+      // permanente. Si le téléchargement échoue, on retombe sur l'URL brute.
+      const incomingAvatar: string | null = meta.avatar_url ?? meta.picture ?? null
+      if (incomingAvatar) {
+        const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+
+        // L'avatar est-il déjà hébergé chez nous ? si oui, on n'y touche pas.
+        const { data: current } = await supabase
+          .from('profiles').select('avatar_url').eq('id', user.id).single()
+        const alreadyHosted = !!current?.avatar_url
+          && supabaseHost !== ''
+          && current.avatar_url.startsWith(supabaseHost)
+          && current.avatar_url.includes('/avatars/')
+
+        const isRemote = typeof incomingAvatar === 'string'
+          && incomingAvatar.startsWith('http')
+          && (supabaseHost === '' || !incomingAvatar.startsWith(supabaseHost))
+
+        if (alreadyHosted) {
+          // garder l'avatar permanent existant — ne rien faire
+        } else if (isRemote) {
+          try {
+            const controller = new AbortController()
+            const timer = setTimeout(() => controller.abort(), 8000)
+            const res = await fetch(incomingAvatar, { signal: controller.signal })
+            clearTimeout(timer)
+            if (res.ok) {
+              const contentType = res.headers.get('content-type') ?? 'image/jpeg'
+              const ext = contentType.includes('png') ? 'png'
+                : contentType.includes('webp') ? 'webp' : 'jpg'
+              const buf = new Uint8Array(await res.arrayBuffer())
+              const path = `${user.id}/linkedin.${ext}`
+              const { error: upErr } = await supabase.storage
+                .from('avatars')
+                .upload(path, buf, { contentType, upsert: true })
+              if (!upErr) {
+                const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path)
+                updates.avatar_url = pub.publicUrl
+              } else {
+                updates.avatar_url = incomingAvatar // fallback : URL brute
+              }
+            } else {
+              updates.avatar_url = incomingAvatar // fallback : URL brute
+            }
+          } catch {
+            updates.avatar_url = incomingAvatar // fallback : URL brute
+          }
+        } else {
+          updates.avatar_url = incomingAvatar
+        }
       }
 
       // LinkedIn profile URL — available via OIDC `profile` claim or identity_data
@@ -86,6 +135,17 @@ export async function GET(request: NextRequest) {
         null
 
       if (linkedinUrl) updates.linkedin = linkedinUrl
+
+      // GDPR consent proof — record ToS acceptance on the profile the first time we
+      // have a session. Covers email-confirmation completion AND LinkedIn sign-up.
+      // Email signup carries the real acceptance timestamp in metadata; for LinkedIn
+      // the user ticked the box in the UI before the OAuth redirect, so we stamp now.
+      const { data: termsRow } = await supabase
+        .from('profiles').select('terms_accepted_at').eq('id', user.id).single()
+      if (!termsRow?.terms_accepted_at) {
+        updates.terms_version     = meta.terms_version ?? '1.0'
+        updates.terms_accepted_at = meta.terms_accepted_at ?? new Date().toISOString()
+      }
 
       if (Object.keys(updates).length > 0) {
         await supabase
