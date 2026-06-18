@@ -86,7 +86,11 @@ export default function FeedPage() {
     if (!valid.length) return
     const read = await Promise.all(valid.map(async f => ({ dataUrl: await readDataUrl(f), name: f.name })))
     setPdf(null)
-    setImages(prev => [...prev, ...read].slice(0, MAX_IMAGES))
+    setImages(prev => {
+      const merged = [...prev, ...read]
+      if (merged.length > MAX_IMAGES) alert(`You can add up to ${MAX_IMAGES} photos per post — the extra ones were not added.`)
+      return merged.slice(0, MAX_IMAGES)
+    })
   }
 
   const uploadDataUrl = async (dataUrl: string, name: string): Promise<string | null> => {

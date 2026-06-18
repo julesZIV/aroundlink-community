@@ -1121,7 +1121,7 @@ export default function ChannelDetailPage() {
 
           <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', margin: '0 0 6px' }}>Emoji</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-            {['💬','📢','🎙️','🎤','😂','🎉','🥳','🌍','🌐','🎓','📚','🤝','💡','🚀','🔥','✨','🇪🇺','🇫🇷','✈️','🏛️'].map(e => (
+            {[...new Set([editEmoji, '💬','📢','🎙️','🎤','😂','🎉','🥳','🌍','🌐','🎓','📚','🤝','💡','🚀','🔥','✨','🇪🇺','🇫🇷','✈️','🏛️'].filter(Boolean))].map(e => (
               <button key={e} onClick={() => setEditEmoji(e)}
                 style={{ width: 34, height: 34, borderRadius: 10, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                   border: editEmoji === e ? '2px solid #1a3055' : '1px solid #e2e8f0', background: editEmoji === e ? '#eef6ff' : 'white' }}>{e}</button>
