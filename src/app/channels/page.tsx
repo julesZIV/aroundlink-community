@@ -36,7 +36,9 @@ function inviteInitials(u: InviteUser) {
 
 const EMOJI_OPTIONS = [
   // Communication & channels
-  '💬','📢','📣','🗣️','📨','📬','📩','✉️','📮','📯',
+  '💬','📢','📣','🗣️','🎙️','🎤','📨','📬','📩','✉️','📮','📯',
+  // Ambiance & fun
+  '😂','🤣','🎉','🥳','🔥','👏','✨','😄',
   // International & globe
   '🌍','🌎','🌏','🌐','🗺️','🧭','🌉','🌁','🗼','🏔️',
   // Voyages & mobilité
