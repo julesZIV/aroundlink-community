@@ -72,17 +72,22 @@ export function useFeed(userId: string | undefined) {
 
   const createPost = useCallback(async (
     text: string,
-    media?: { type: 'image' | 'pdf'; url: string; name: string } | null,
+    media?: { type: 'image' | 'pdf'; url: string; name: string; urls?: string[] } | null,
     optimisticProfile?: ProfileMini
   ): Promise<string | null> => {
     if (!userId) return 'Not logged in'
     const row: Partial<FeedPost> & { text?: string | null } = { user_id: userId, text: text || null }
-    if (media) { row.media_type = media.type; row.media_url = media.url; row.media_name = media.name }
+    if (media) {
+      row.media_type = media.type; row.media_url = media.url; row.media_name = media.name
+      // Plusieurs images → carrousel (au moins 2 pour stocker le tableau)
+      if (media.urls && media.urls.length > 1) row.media_urls = media.urls
+    }
 
     const tempId = `temp-${Date.now()}`
     const optimistic: PostWithMeta = {
       id: tempId, user_id: userId, text: text || null,
       media_type: media?.type ?? null, media_url: media?.url ?? null, media_name: media?.name ?? null,
+      media_urls: (media?.urls && media.urls.length > 1) ? media.urls : null,
       created_at: new Date().toISOString(),
       likes: [], comments: [],
       profiles: optimisticProfile ?? null,

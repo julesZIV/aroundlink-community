@@ -188,9 +188,10 @@ export type Database = {
           media_type: 'image' | 'pdf' | null
           media_url: string | null
           media_name: string | null
+          media_urls: string[] | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['feed_posts']['Row'], 'id' | 'created_at'>
+        Insert: Omit<Database['public']['Tables']['feed_posts']['Row'], 'id' | 'created_at' | 'media_urls'> & { media_urls?: string[] | null }
         Update: Partial<Database['public']['Tables']['feed_posts']['Insert']>
       }
       feed_likes: {

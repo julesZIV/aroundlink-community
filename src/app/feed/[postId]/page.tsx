@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import PostCarousel from '@/components/ui/PostCarousel'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://aroundlink.com'
 const DEFAULT_OG = `${SITE_URL}/og-default.png`  // image générique AroundLink
@@ -13,7 +14,7 @@ async function getPost(postId: string) {
     const admin = createAdminClient()
     const { data } = await admin
       .from('feed_posts')
-      .select('id, text, media_url, media_type, created_at, profiles!feed_posts_user_id_fkey(name, first_name, last_name, institution)')
+      .select('id, text, media_url, media_urls, media_type, created_at, profiles!feed_posts_user_id_fkey(name, first_name, last_name, institution)')
       .eq('id', postId)
       .single()
     return data
@@ -99,8 +100,10 @@ export default async function FeedPostPage({ params }: Props) {
             </p>
           )}
 
-          {/* Image */}
-          {post.media_url && post.media_type === 'image' && (
+          {/* Image(s) */}
+          {post.media_type === 'image' && post.media_urls && post.media_urls.length > 1 ? (
+            <div style={{ padding: '0 24px' }}><PostCarousel images={post.media_urls} /></div>
+          ) : post.media_url && post.media_type === 'image' && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={post.media_url} alt="" style={{ width: '100%', maxHeight: 400, objectFit: 'cover', display: 'block' }} />
           )}

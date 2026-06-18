@@ -297,30 +297,6 @@ function AuthForm() {
             ))}
           </div>
 
-          {/* Terms acceptance — governs BOTH LinkedIn and email sign-up */}
-          {mode === 'signup' && (
-            <label className="flex items-start gap-2.5 cursor-pointer mb-4">
-              <input
-                type="checkbox"
-                checked={acceptedTerms}
-                onChange={e => setAcceptedTerms(e.target.checked)}
-                className="mt-0.5 flex-shrink-0 accent-[#1a3055]"
-                style={{ width: 15, height: 15 }}
-              />
-              <span className="text-xs text-slate-500 leading-relaxed">
-                I have read and accept the{' '}
-                <a href="/cgu" target="_blank" rel="noopener" style={{ color: '#1a3055', fontWeight: 600, textDecoration: 'underline' }}>
-                  terms of use
-                </a>
-                {' '}and the{' '}
-                <a href="/privacy" target="_blank" rel="noopener" style={{ color: '#1a3055', fontWeight: 600, textDecoration: 'underline' }}>
-                  privacy policy
-                </a>
-                . <span className="text-red-400">*</span>
-              </span>
-            </label>
-          )}
-
           {/* LinkedIn SSO */}
           <button
             onClick={handleLinkedIn}
@@ -466,6 +442,30 @@ function AuthForm() {
               <p className="text-xs text-slate-400 bg-slate-50 rounded-xl px-3 py-2.5 leading-relaxed">
                 💡 You can complete your profile (institution, LinkedIn…) once logged in from the <strong>My profile</strong> section.
               </p>
+            )}
+
+            {/* Terms acceptance — required, governs BOTH LinkedIn and email sign-up */}
+            {mode === 'signup' && (
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={e => setAcceptedTerms(e.target.checked)}
+                  className="mt-0.5 flex-shrink-0 accent-[#1a3055]"
+                  style={{ width: 15, height: 15 }}
+                />
+                <span className="text-xs text-slate-500 leading-relaxed">
+                  I have read and accept the{' '}
+                  <a href="/cgu" target="_blank" rel="noopener" style={{ color: '#1a3055', fontWeight: 600, textDecoration: 'underline' }}>
+                    terms of use
+                  </a>
+                  {' '}and the{' '}
+                  <a href="/privacy" target="_blank" rel="noopener" style={{ color: '#1a3055', fontWeight: 600, textDecoration: 'underline' }}>
+                    privacy policy
+                  </a>
+                  . <span className="text-red-400">*</span>
+                </span>
+              </label>
             )}
 
             {error && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">⚠️ {error}</p>}

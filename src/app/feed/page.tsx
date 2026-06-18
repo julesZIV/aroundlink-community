@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabase/client'
 import MentionInput from '@/components/ui/MentionInput'
 import { useRouter } from 'next/navigation'
 import { renderMentions } from '@/components/ui/renderMentions'
+import PostCarousel from '@/components/ui/PostCarousel'
 import ImageLightbox from '@/components/ui/ImageLightbox'
 import AvatarImg from '@/components/ui/AvatarImg'
 
@@ -26,7 +27,9 @@ export default function FeedPage() {
   const { posts, loading, loadingMore, hasMore, loadMore, error: feedError, createPost, toggleLike, addComment, deletePost, editPost } = useFeed(user?.id)
   const router = useRouter()
   const [text,   setText]   = useState('')
-  const [media,  setMedia]  = useState<{ type:'image'|'pdf'; dataUrl:string; name:string } | null>(null)
+  const [images, setImages] = useState<{ dataUrl: string; name: string }[]>([])
+  const [pdf,    setPdf]    = useState<{ dataUrl: string; name: string } | null>(null)
+  const hasMedia = images.length > 0 || !!pdf
   const [expanded,setExp]   = useState<Record<string,boolean>>({})
   const [cText,  setCText]  = useState<Record<string,string>>({})
   const [posting, setPosting] = useState(false)
@@ -54,45 +57,71 @@ export default function FeedPage() {
     }
   }, [profile])
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return
-    const isImg = file.type.startsWith('image/')
-    const isPdf = file.type === 'application/pdf'
-    if (!isImg && !isPdf) return
-    const maxSize = isImg ? 5 * 1024 * 1024 : 20 * 1024 * 1024
-    if (file.size > maxSize) {
-      alert(isImg ? 'Image must be under 5 MB.' : 'PDF must be under 20 MB.')
-      e.target.value = ''
+  const readDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = ev => resolve(ev.target!.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+
+  const MAX_IMAGES = 10
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = ''
+    if (!files.length) return
+    // PDF (un seul) — exclusif des images
+    if (files[0].type === 'application/pdf') {
+      const f = files[0]
+      if (f.size > 20 * 1024 * 1024) { alert('PDF must be under 20 MB.'); return }
+      setPdf({ dataUrl: await readDataUrl(f), name: f.name })
+      setImages([])
       return
     }
-    const reader = new FileReader()
-    reader.onload = ev => setMedia({ type: isImg ? 'image' : 'pdf', dataUrl: ev.target!.result as string, name: file.name })
-    reader.readAsDataURL(file)
-    e.target.value = ''
+    // Images (potentiellement plusieurs) — exclusives du PDF
+    const imgs = files.filter(f => f.type.startsWith('image/'))
+    const oversized = imgs.filter(f => f.size > 5 * 1024 * 1024)
+    if (oversized.length) alert(`Skipped (over 5 MB): ${oversized.map(f => f.name).join(', ')}`)
+    const valid = imgs.filter(f => f.size <= 5 * 1024 * 1024)
+    if (!valid.length) return
+    const read = await Promise.all(valid.map(async f => ({ dataUrl: await readDataUrl(f), name: f.name })))
+    setPdf(null)
+    setImages(prev => [...prev, ...read].slice(0, MAX_IMAGES))
+  }
+
+  const uploadDataUrl = async (dataUrl: string, name: string): Promise<string | null> => {
+    if (!user) return null
+    const [header, base64] = dataUrl.split(',')
+    const mime = header.match(/:(.*?);/)?.[1] ?? 'application/octet-stream'
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const blob = new Blob([bytes], { type: mime })
+    const ext = name.split('.').pop() ?? 'bin'
+    const path = `${user.id}/${Date.now()}-${Math.round(Math.random() * 1e6)}.${ext}`
+    const { data } = await supabase.storage.from('feed-media').upload(path, blob, { contentType: mime })
+    if (!data) return null
+    return supabase.storage.from('feed-media').getPublicUrl(data.path).data.publicUrl
   }
 
   const submit = async () => {
-    if (!text.trim() && !media) return
+    if (!text.trim() && !hasMedia) return
     setPosting(true)
     setPostError(null)
-    let uploadedMedia = null
-    if (media && user) {
-      try {
-        const [header, base64] = media.dataUrl.split(',')
-        const mime = header.match(/:(.*?);/)?.[1] ?? 'application/octet-stream'
-        const binary = atob(base64)
-        const bytes = new Uint8Array(binary.length)
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-        const blob = new Blob([bytes], { type: mime })
-        const ext = media.name.split('.').pop() ?? 'bin'
-        const path = `${user.id}/${Date.now()}.${ext}`
-        const { data } = await supabase.storage.from('feed-media').upload(path, blob, { contentType: mime })
-        if (data) {
-          const { data: { publicUrl } } = supabase.storage.from('feed-media').getPublicUrl(data.path)
-          uploadedMedia = { type: media.type, url: publicUrl, name: media.name }
+    let uploadedMedia: { type: 'image' | 'pdf'; url: string; name: string; urls?: string[] } | null = null
+    try {
+      if (pdf) {
+        const url = await uploadDataUrl(pdf.dataUrl, pdf.name)
+        if (url) uploadedMedia = { type: 'pdf', url, name: pdf.name }
+      } else if (images.length) {
+        const urls: string[] = []
+        for (const img of images) {
+          const url = await uploadDataUrl(img.dataUrl, img.name)
+          if (url) urls.push(url)
         }
-      } catch (e) { console.error('Upload error', e) }
-    }
+        if (urls.length) uploadedMedia = { type: 'image', url: urls[0], name: images[0].name, urls }
+      }
+    } catch (e) { console.error('Upload error', e) }
     const optimisticProfile = profile ? {
       name: profile.name ?? '',
       first_name: profile?.first_name ?? null,
@@ -102,7 +131,7 @@ export default function FeedPage() {
     } : null
     const err = await createPost(text.trim(), uploadedMedia, optimisticProfile ?? undefined)
     if (err) setPostError(err)
-    else { setText(''); setMedia(null) }
+    else { setText(''); setImages([]); setPdf(null) }
     setPosting(false)
   }
 
@@ -186,19 +215,29 @@ export default function FeedPage() {
               {postError && (
                 <p className="mt-2 text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">⚠️ {postError}</p>
               )}
-              {media && (
+              {images.length > 0 && (
+                <div className="mt-2 flex gap-2 flex-wrap">
+                  {images.map((img, i) => (
+                    <div key={i} className="relative">
+                      <img src={img.dataUrl} alt={img.name} className="rounded-xl object-cover border border-slate-200" style={{ width: 80, height: 80 }}/>
+                      <button onClick={() => setImages(prev => prev.filter((_, j) => j !== i))}
+                        className="absolute -top-1.5 -right-1.5 bg-white rounded-full w-5 h-5 text-slate-500 text-xs flex items-center justify-center shadow border border-slate-200">✕</button>
+                    </div>
+                  ))}
+                  {images.length > 1 && <p className="w-full text-xs text-slate-400 mt-0.5">{images.length} photos — they'll show as a carousel</p>}
+                </div>
+              )}
+              {pdf && (
                 <div className="mt-2 relative">
-                  {media.type === 'image'
-                    ? <img src={media.dataUrl} alt={media.name} className="rounded-xl w-full object-cover" style={{ maxHeight: 200 }}/>
-                    : <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-3 border border-slate-200"><span className="text-slate-400"><IconFile /></span><p className="text-sm font-semibold">{media.name}</p></div>}
-                  <button onClick={() => setMedia(null)} className="absolute top-2 right-2 bg-white rounded-full w-6 h-6 text-slate-500 text-xs flex items-center justify-center shadow border border-slate-200">✕</button>
+                  <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-3 border border-slate-200"><span className="text-slate-400"><IconFile /></span><p className="text-sm font-semibold">{pdf.name}</p></div>
+                  <button onClick={() => setPdf(null)} className="absolute top-2 right-2 bg-white rounded-full w-6 h-6 text-slate-500 text-xs flex items-center justify-center shadow border border-slate-200">✕</button>
                 </div>
               )}
               <div className="flex items-center justify-between mt-2 gap-2">
                 <div className="flex gap-1">
-                  <input type="file" ref={fileRef} className="hidden" accept="image/*,application/pdf" onChange={handleFile}/>
-                  <button onClick={() => { if(fileRef.current){fileRef.current.accept='image/*';fileRef.current.click()} }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs text-slate-500 hover:bg-slate-50 border border-slate-200"><IconImage /> Photo</button>
-                  <button onClick={() => { if(fileRef.current){fileRef.current.accept='application/pdf';fileRef.current.click()} }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs text-slate-500 hover:bg-slate-50 border border-slate-200"><IconFile /> PDF</button>
+                  <input type="file" ref={fileRef} className="hidden" multiple accept="image/*,application/pdf" onChange={handleFile}/>
+                  <button onClick={() => { if(fileRef.current){fileRef.current.accept='image/*';fileRef.current.multiple=true;fileRef.current.click()} }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs text-slate-500 hover:bg-slate-50 border border-slate-200"><IconImage /> Photo</button>
+                  <button onClick={() => { if(fileRef.current){fileRef.current.accept='application/pdf';fileRef.current.multiple=false;fileRef.current.click()} }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs text-slate-500 hover:bg-slate-50 border border-slate-200"><IconFile /> PDF</button>
                 </div>
                 <div className="flex items-center gap-2">
                   {text.length > 1800 && (
@@ -206,7 +245,7 @@ export default function FeedPage() {
                       {2000 - text.length}
                     </span>
                   )}
-                  {(text.trim() || media) && (
+                  {(text.trim() || hasMedia) && (
                     <button onClick={submit} disabled={posting || text.length > 2000} className="px-4 py-1.5 rounded-xl text-white text-xs font-semibold disabled:opacity-50" style={{ background: '#1a3055' }}>
                       {posting ? '…' : 'Post 📰'}
                     </button>
@@ -320,7 +359,9 @@ export default function FeedPage() {
                   ) : (
                     post.text && <p className="text-sm text-slate-700 mt-2 leading-relaxed whitespace-pre-wrap">{renderMentions(post.text)}</p>
                   )}
-                  {post.media_url && (
+                  {post.media_type === 'image' && post.media_urls && post.media_urls.length > 1 ? (
+                    <PostCarousel images={post.media_urls} onOpen={(src) => { setLightboxSrc(src); setLightboxName(post.media_name ?? 'image') }} />
+                  ) : post.media_url && (
                     post.media_type === 'image'
                       ? <img src={post.media_url} alt={post.media_name ?? ''} className="mt-2 rounded-xl w-full object-cover" style={{ maxHeight: 280, cursor: 'zoom-in' }}
                           onClick={() => { setLightboxSrc(post.media_url!); setLightboxName(post.media_name ?? 'image') }}/>
