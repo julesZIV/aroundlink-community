@@ -84,7 +84,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Vincent Vandewalle', role: 'Host', institution: "École française de l'Intelligence Artificielle (EFELIA) / Université Côte d'Azur" },
     ],
     description: 'Opening of the International Digital Week 2026.',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_mon_02',
@@ -102,7 +102,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Sarah Knight', role: 'Director of Digital Transformation in Higher Education', institution: 'JISC', talk: 'Driving digital transformation in HE: from building digital and AI capabilities to getting the blend right and ensuring digital equity' },
     ],
     description: 'Three keynotes covering: (1) Course Interoperability in International Higher Education; (2) Navigating digital transformation and internationalisation in a world of uncertainty; (3) Driving digital transformation in HE.',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_mon_03',
@@ -141,7 +141,7 @@ export const IDW_SESSIONS: Session[] = [
     title: 'Poster Session — Track 1: Digital Transformation in Education',
     speakers: [],
     description: '',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_mon_06',
@@ -204,7 +204,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Apostolos Altiparmakis', role: 'Moderator', institution: 'Syncnify — Project Manager and Co-founder' },
     ],
     description: 'This round table examines how AI is reshaping global student competitiveness and redefining the skills needed to succeed in an interconnected world. It will explore the balance between innovation and equity, questioning who benefits first from AI-driven education and who risks being left behind. The discussion will also address government readiness and the need for cross-border standards to ensure the responsible, inclusive, and coordinated use of AI in education.',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_mon_10',
@@ -233,7 +233,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Julia Reinhard', role: 'Facilitator', institution: 'Haaga Helia University of Applied Sciences — Innovation Hub Manager' },
     ],
     description: 'In this interactive workshop, participants will co-create digital innovation concepts to strengthen entrepreneurship education in higher education institutions.',
-    location: null,
+    location: 'Room 202',
   },
   {
     id: 's_tue_is_01',
@@ -248,7 +248,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Giorgio Marinoni', role: 'Facilitator', institution: 'International Association of Universities (IAU) — Manager, HE and Internationalisation' },
     ],
     description: "In this workshop, participants will work collaboratively to identify the positive and negative aspects of the internationalisation process, both at a general level and at their specific institutions. They will discuss how to create an internationalisation process for society and the global common good by identifying suitable internationalisation strategies and activities, challenges to their implementation and possible solutions to those challenges. The aim of the workshop is to raise awareness on the fact that internationalisation is not a neutral process but has profound impact on society and to share experiences on how to reorient internationalisation to ensure that such impact is a positive and not a negative one.",
-    location: null,
+    location: 'Room 203',
   },
   {
     id: 's_tue_dte_01',
@@ -266,7 +266,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Kitte Marttinen', role: 'Moderator', institution: 'Haaga Helia University of Applied Sciences — Project Director' },
     ],
     description: 'This round table explores how AI is transforming the classroom by reshaping instructional design toward more personalised, interactive learning experiences. It will examine how assessment can evolve to emphasise critical thinking and authentic tasks in AI-enabled environments, while addressing challenges around academic integrity and the responsible use of generative tools. The discussion will also reflect on the changing role of educators as facilitators and ethical guides, the importance of evaluating AI tools effectively, and the need to address equity risks while equipping students with the skills to use AI critically and responsibly.',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_tue_common_salon_1',
@@ -310,7 +310,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Elizabeth Newall', role: 'Moderator', institution: 'JISC' },
     ],
     description: 'This round table explores the key challenges of digital equity and access in education, examining how socio-economic factors shape opportunities for learners in different contexts. It will highlight models that support low-resource environments, while discussing the responsibilities of institutions and governments in addressing structural barriers. The conversation will also consider how equity intersects with AI and the crucial role of digital literacy in ensuring that no learner is left behind.',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_tue_di_02',
@@ -325,7 +325,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Julia Reinhard', role: 'Facilitator', institution: 'Haaga Helia University of Applied Sciences — Innovation Hub Manager' },
     ],
     description: 'This workshop is a continuation of Part 1.',
-    location: null,
+    location: 'Room 202',
   },
   {
     id: 's_tue_is_02',
@@ -340,7 +340,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Giorgio Marinoni', role: 'Facilitator', institution: 'International Association of Universities (IAU) — Manager, HE and Internationalisation' },
     ],
     description: 'This workshop is a continuation of Part 1. Participants continue co-creating digital innovation concepts to strengthen entrepreneurship education in higher education institutions.',
-    location: null,
+    location: 'Room 203',
   },
   {
     id: 's_tue_lunch',
@@ -368,7 +368,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Jochen Dickel', role: 'Facilitator', institution: 'Fachhochschule des Mittelstands (FHM) — Scientific Director' },
     ],
     description: 'This workshop explores how to develop AI literacy for non-technical staff in production and administration. It presents a competence-based model combining practical training, e-learning, and team-based approaches. Participants will examine challenges and opportunities in fostering AI skills beyond technical roles. The session supports confident, reflective, and context-sensitive use of AI in everyday work.',
-    location: null,
+    location: 'Room 202',
   },
   {
     id: 's_tue_is_03',
@@ -409,7 +409,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Apostolos Altiparmakis', role: 'Facilitator', institution: 'Syncnify — Project Manager and Co-founder' },
     ],
     description: 'This presentation explores how ideas can evolve into scalable startups through the experience of the EU-funded SeedFund project, with examples from France, Poland, Bulgaria, Spain, Greece, and Cyprus. It highlights the role of seed funding, hackathons, mentoring, and university support in helping students and young founders move from experimentation to validation and investment readiness.',
-    location: null,
+    location: 'Room 202',
   },
   {
     id: 's_tue_is_04',
@@ -449,7 +449,7 @@ export const IDW_SESSIONS: Session[] = [
     title: 'Poster Session — Track 2: Digital Innovation & Entrepreneurship',
     speakers: [],
     description: '',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_wed_02',
@@ -462,7 +462,7 @@ export const IDW_SESSIONS: Session[] = [
     title: 'Poster Session — Track 3: Internationalisation for Society',
     speakers: [],
     description: '',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_wed_03',
@@ -532,7 +532,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Namrata Sethi', role: 'Facilitator', institution: 'Haaga Helia University of Applied Sciences — Project Manager' },
     ],
     description: 'This workshop explores how educators can use AI as a co-creator to help students turn ideas into impactful solutions. Participants will work with practical frameworks that combine digital tools, collaboration, and real-world problem-solving. Using a Living Lab approach, they will design learning activities for testing and refinement in real-world settings. The session offers simple, actionable strategies to foster innovation and entrepreneurial thinking in higher education.',
-    location: null,
+    location: 'Room 202',
   },
   {
     id: 's_thu_is_01',
@@ -548,7 +548,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Merche Gimeno', role: 'Facilitator', institution: 'University CEU Cardenal Herrera-Valencia — Head of the International Relations Office' },
     ],
     description: 'Internationalisation in Higher Education increasingly highlights the key role of administrative and service staff in global engagement, yet they often lack access to structured intercultural training. COIL4Staff, based on Collaborative Online International Learning (COIL), addresses this gap through Virtual Exchange, fostering collaboration, leadership, and peer learning. Developed with Université Côte d\'Azur, the programme enables staff to exchange best practices, tackle shared institutional challenges, and co-develop action plans in key areas such as mobility, admissions, and student services, strengthening partnerships and internationalisation strategies.',
-    location: null,
+    location: 'Room 203',
   },
   {
     id: 's_thu_dte_01',
@@ -563,7 +563,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Martha Castellanos', role: 'Facilitator', institution: 'Fundación Universitaria del Área Andina — Academic Vice-Rector' },
     ],
     description: 'This keynote explores how Generative AI can strengthen human development and critical thinking when used through a human-centered educational approach. Rather than replacing human capacities, AI should foster analysis, ethical reflection, and meaningful learning. The session highlights how universities can redesign teaching, assessment and learning experiences so students become critical thinkers and active creators of knowledge, ensuring technology serves human intelligence, responsibility and social transformation.',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_thu_di_02',
@@ -578,7 +578,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Katja Wirenius', role: 'Facilitator', institution: 'Haaga Helia University of Applied Sciences — Senior Lecturer' },
     ],
     description: 'Participants step into the future to explore how digital innovation and AI may reshape entrepreneurship, future opportunities across different fields, and the role of higher education in innovative ecosystems. This creative workshop uses future scenarios and rapid design methods to reflect on what actions educators can take today to prepare for these developments.',
-    location: null,
+    location: 'Room 202',
   },
   {
     id: 's_thu_is_02',
@@ -593,7 +593,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Natalia Timuș', role: 'Facilitator', institution: "Université Côte d'Azur — Manager of International Learning Experiences" },
     ],
     description: 'This workshop focuses on increasing the understanding of culture transfer and intercultural competence in the context of in-person and online learning. It aims at analysing the advantages and disadvantages of the intercultural co-creation process. Also, the workshop shares good practices on culture transfer in various learning environments and provides a hands-on activity for participants\' engagement in the transfer of individual intercultural knowledge and experience.',
-    location: null,
+    location: 'Room 203',
   },
   {
     id: 's_thu_dte_02',
@@ -608,7 +608,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Stéphanie Lopez', role: 'Facilitator', institution: "Université Côte d'Azur — Data Scientist, Principal Investigator" },
     ],
     description: 'AI in healthcare education offers major opportunities, but it also raises urgent questions about what AI means, as the field evolves quickly and new tools become widely accessible without clear guidance on their benefits and risks. This session explores how AI can support learning, telemedicine, and feedback, while also creating challenges around bias, privacy, trust, and assessment. The goal is a clear, ethical, human-centred use of AI through education and continuing professional development.',
-    location: null,
+    location: 'Amphitheatre 2',
   },
   {
     id: 's_thu_lunch',
@@ -637,7 +637,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Avtandil Mgebrishvili', role: 'Facilitator', institution: 'Ilia State University' },
     ],
     description: 'The presentation focuses on transatlantic partnership between Ilia State University and San Diego State University that advanced entrepreneurship education reform in Georgia. Through a blended Train-the-Trainers programme, faculty developed contemporary entrepreneurship teaching methods, experiential learning approaches, and digital pedagogies. The initiative led to the design and pilot of interdisciplinary entrepreneurship and innovation courses, supported by a student bootcamp and start-up ideation pipeline. Beyond curriculum reform, it strengthened both curriculum and co-curricular activities and contributed to student start-up support within the wider innovation ecosystem — Enterprise Education beyond traditional programmes. The case shows how digitally enabled international cooperation can drive sustainable institutional change, academic capacity-building, and innovation-oriented education in transition contexts.',
-    location: null,
+    location: 'Room 202',
   },
   {
     id: 's_thu_is_03',
@@ -679,7 +679,7 @@ export const IDW_SESSIONS: Session[] = [
       { name: 'Juan Luis Blanco Guzman', role: 'Facilitator', institution: 'Universidad de Sevilla — Lecturer and Researcher, Department of Financial Economics and Operations Management' },
     ],
     description: 'In this workshop, you will explore how AI tools and challenge-based learning can support entrepreneurship-oriented education in business and tourism. Drawing on two Erasmus+ Blended Intensive Programmes coordinated at the University of Seville, we will share practical examples of student projects, learning dynamics, and innovation challenges. The session will focus on how international and applied learning environments help students develop digital, entrepreneurial, and collaborative skills. We also hope to open a discussion on how these approaches can be transferred to other university contexts.',
-    location: null,
+    location: 'Room 202',
   },
   {
     id: 's_thu_is_04',
@@ -719,6 +719,6 @@ export const IDW_SESSIONS: Session[] = [
     title: 'Closure Session — IDW Evaluation & LinkedIn Group',
     speakers: [],
     description: 'As we conclude our International Digital Week, this final session serves as our collaborative debrief. We encourage you to give us your feedback and we thank you for your dedicated participation.',
-    location: null,
+    location: 'Amphitheatre 2',
   },
 ]
