@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation'
 import { renderMentions } from '@/components/ui/renderMentions'
 import PostCarousel from '@/components/ui/PostCarousel'
 import ImageLightbox from '@/components/ui/ImageLightbox'
+import LikersModal from '@/components/ui/LikersModal'
 import AvatarImg from '@/components/ui/AvatarImg'
 
 export default function FeedPage() {
@@ -37,6 +38,7 @@ export default function FeedPage() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [lightboxSrc,  setLightboxSrc]  = useState<string | null>(null)
   const [lightboxName, setLightboxName] = useState<string>('')
+  const [likersIds,    setLikersIds]    = useState<string[] | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [menuOpen,      setMenuOpen]      = useState<string | null>(null)  // postId du menu ouvert
   const [editingId,     setEditingId]     = useState<string | null>(null)  // postId en cours d'édition
@@ -418,6 +420,12 @@ export default function FeedPage() {
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${liked ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}>
                       👍 {post.likes.length}
                     </button>
+                    {post.likes.length > 0 && (
+                      <button onClick={() => setLikersIds(post.likes.map(l => l.user_id))}
+                        className="text-xs text-slate-400 hover:text-blue-600 hover:underline px-1.5 py-1.5 font-medium">
+                        Who liked?
+                      </button>
+                    )}
                     <button onClick={() => setExp(e => ({ ...e, [post.id]: !e[post.id] }))}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${showComments ? 'bg-slate-100 text-slate-700' : 'text-slate-400 hover:bg-slate-50'}`}>
                       💬 {post.comments.length}
@@ -529,6 +537,8 @@ export default function FeedPage() {
         onClose={() => { setLightboxSrc(null); setLightboxName('') }}
       />
     )}
+
+    {likersIds && <LikersModal userIds={likersIds} onClose={() => setLikersIds(null)} />}
 
     {/* Galerie des fichiers & photos partagés dans le feed */}
     {showFiles && (

@@ -11,6 +11,7 @@ import { renderMentions } from '@/components/ui/renderMentions'
 import ImageLightbox from '@/components/ui/ImageLightbox'
 import AvatarImg from '@/components/ui/AvatarImg'
 import PostCarousel from '@/components/ui/PostCarousel'
+import LikersModal from '@/components/ui/LikersModal'
 import { isAroundLinkOrg } from '@/lib/isAroundLink'
 
 // Minimalist SVG icons (no emoji)
@@ -109,6 +110,7 @@ export default function ChannelDetailPage() {
   const [infoOpen, setInfoOpen] = useState(false)  // unused — kept for compat
   const [lightboxSrc,  setLightboxSrc]  = useState<string | null>(null)
   const [lightboxName, setLightboxName] = useState<string>('')
+  const [likersIds,    setLikersIds]    = useState<string[] | null>(null)
   const [deletePostConfirm, setDeletePostConfirm] = useState<string | null>(null)
   const [postMenuOpen,      setPostMenuOpen]      = useState<string | null>(null)
   const [editingPostId,     setEditingPostId]     = useState<string | null>(null)
@@ -784,6 +786,12 @@ export default function ChannelDetailPage() {
                                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold transition-all ${liked ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}>
                                 👍 {post.likes?.length ?? 0}
                               </button>
+                              {(post.likes?.length ?? 0) > 0 && (
+                                <button onClick={() => setLikersIds((post.likes ?? []).map(l => l.user_id))}
+                                  className="text-xs text-slate-400 hover:text-blue-600 hover:underline px-1.5 py-1 font-medium">
+                                  Who liked?
+                                </button>
+                              )}
                               <button onClick={() => setExp(e => ({ ...e, [post.id]: !e[post.id] }))}
                                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold transition-all ${showComments ? 'bg-slate-100 text-slate-700' : 'text-slate-400 hover:bg-slate-50'}`}>
                                 💬 {post.comments?.length ?? 0}
@@ -1066,6 +1074,7 @@ export default function ChannelDetailPage() {
         onClose={() => { setLightboxSrc(null); setLightboxName('') }}
       />
     )}
+    {likersIds && <LikersModal userIds={likersIds} onClose={() => setLikersIds(null)} />}
 
     {/* Modal confirmation suppression de message */}
     {deletePostConfirm && (
