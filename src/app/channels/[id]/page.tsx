@@ -10,6 +10,7 @@ import MentionInput from '@/components/ui/MentionInput'
 import { renderMentions } from '@/components/ui/renderMentions'
 import ImageLightbox from '@/components/ui/ImageLightbox'
 import AvatarImg from '@/components/ui/AvatarImg'
+import PostCarousel from '@/components/ui/PostCarousel'
 
 // Minimalist SVG icons (no emoji)
 const IconImage = () => (
@@ -97,7 +98,10 @@ export default function ChannelDetailPage() {
   const channel = channels.find(c => c.id === id)
   const [tab, setTab]         = useState<'messages' | 'documents' | 'members'>('messages')
   const [msgText, setMsgText] = useState('')
-  const [msgMedia, setMsgMedia] = useState<{ type: 'image' | 'pdf'; dataUrl: string; name: string } | null>(null)
+  const [msgImages, setMsgImages] = useState<{ dataUrl: string; name: string }[]>([])
+  const [msgPdf,    setMsgPdf]    = useState<{ dataUrl: string; name: string } | null>(null)
+  const hasMsgMedia = msgImages.length > 0 || !!msgPdf
+  const MAX_MSG_IMAGES = 10
   const [sending, setSending]   = useState(false)
   const [sendError, setSendError]   = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -283,21 +287,53 @@ export default function ChannelDetailPage() {
     )
   }
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return
-    const isImg = file.type.startsWith('image/')
-    const isPdf = file.type === 'application/pdf'
-    if (!isImg && !isPdf) return
-    const maxSize = isImg ? 5 * 1024 * 1024 : 20 * 1024 * 1024 // 5MB images, 20MB PDFs
-    if (file.size > maxSize) {
-      alert(isImg ? 'Image must be under 5 MB.' : 'PDF must be under 20 MB.')
-      e.target.value = ''
+  const readDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = ev => resolve(ev.target!.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = ''
+    if (!files.length) return
+    // PDF (un seul) — exclusif des images
+    if (files[0].type === 'application/pdf') {
+      const f = files[0]
+      if (f.size > 20 * 1024 * 1024) { alert('PDF must be under 20 MB.'); return }
+      setMsgPdf({ dataUrl: await readDataUrl(f), name: f.name })
+      setMsgImages([])
       return
     }
-    const reader = new FileReader()
-    reader.onload = ev => setMsgMedia({ type: isImg ? 'image' : 'pdf', dataUrl: ev.target!.result as string, name: file.name })
-    reader.readAsDataURL(file)
-    e.target.value = ''
+    // Images (potentiellement plusieurs) — exclusives du PDF
+    const imgs = files.filter(f => f.type.startsWith('image/'))
+    const oversized = imgs.filter(f => f.size > 5 * 1024 * 1024)
+    if (oversized.length) alert(`Skipped (over 5 MB): ${oversized.map(f => f.name).join(', ')}`)
+    const valid = imgs.filter(f => f.size <= 5 * 1024 * 1024)
+    if (!valid.length) return
+    const read = await Promise.all(valid.map(async f => ({ dataUrl: await readDataUrl(f), name: f.name })))
+    setMsgPdf(null)
+    setMsgImages(prev => {
+      const merged = [...prev, ...read]
+      if (merged.length > MAX_MSG_IMAGES) alert(`You can add up to ${MAX_MSG_IMAGES} photos per post — the extra ones were not added.`)
+      return merged.slice(0, MAX_MSG_IMAGES)
+    })
+  }
+
+  const uploadChannelImage = async (dataUrl: string, name: string): Promise<string | null> => {
+    if (!user) return null
+    const [header, base64] = dataUrl.split(',')
+    const mime = header.match(/:(.*?);/)?.[1] ?? 'application/octet-stream'
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const blob = new Blob([bytes], { type: mime })
+    const ext = name.split('.').pop() ?? 'bin'
+    const path = `${id}/${user.id}/${Date.now()}-${Math.round(Math.random() * 1e6)}.${ext}`
+    const { data, error } = await supabase.storage.from('channel-media').upload(path, blob, { contentType: mime })
+    if (error || !data) return null
+    return supabase.storage.from('channel-media').getPublicUrl(data.path).data.publicUrl
   }
 
   const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -327,29 +363,27 @@ export default function ChannelDetailPage() {
   }
 
   const handleSend = async () => {
-    if (!msgText.trim() && !msgMedia) return
+    if (!msgText.trim() && !hasMsgMedia) return
     setSending(true); setSendError(null)
     let uploadedMedia = null
-    if (msgMedia && user) {
-      try {
-        const [header, base64] = msgMedia.dataUrl.split(',')
-        const mime = header.match(/:(.*?);/)?.[1] ?? 'application/octet-stream'
-        const binary = atob(base64)
-        const bytes = new Uint8Array(binary.length)
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-        const blob = new Blob([bytes], { type: mime })
-        const ext = msgMedia.name.split('.').pop() ?? 'bin'
-        const path = `${id}/${user.id}/${Date.now()}.${ext}`
-        const { data, error: storageErr } = await supabase.storage.from('channel-media').upload(path, blob, { contentType: mime })
-        if (storageErr) { setSendError(`Media upload failed: ${storageErr.message}`); setSending(false); return }
-        if (data) {
-          const { data: { publicUrl } } = supabase.storage.from('channel-media').getPublicUrl(data.path)
-          uploadedMedia = { type: msgMedia.type, url: publicUrl, name: msgMedia.name }
+    try {
+      if (msgPdf && user) {
+        const url = await uploadChannelImage(msgPdf.dataUrl, msgPdf.name)
+        if (!url) { setSendError('PDF upload failed.'); setSending(false); return }
+        uploadedMedia = { type: 'pdf' as const, url, name: msgPdf.name }
+      } else if (msgImages.length && user) {
+        const urls: string[] = []
+        for (const img of msgImages) {
+          const url = await uploadChannelImage(img.dataUrl, img.name)
+          if (!url) { setSendError('Image upload failed.'); setSending(false); return }
+          urls.push(url)
         }
-      } catch (e: any) { setSendError(`Upload error: ${e?.message}`); setSending(false); return }
-    }
+        // 1re image en media_url (compat), toutes en media_urls (carrousel) si >1
+        uploadedMedia = { type: 'image' as const, url: urls[0], name: msgImages[0].name, urls }
+      }
+    } catch (e: any) { setSendError(`Upload error: ${e?.message}`); setSending(false); return }
     const { error } = await sendMessage(id, msgText.trim(), uploadedMedia)
-    if (error) { setSendError(error) } else { setMsgText(''); setMsgMedia(null) }
+    if (error) { setSendError(error) } else { setMsgText(''); setMsgImages([]); setMsgPdf(null) }
     setSending(false)
   }
 
@@ -711,8 +745,10 @@ export default function ChannelDetailPage() {
                             )}
                             {post.media_url && (
                               post.media_type === 'image'
-                                ? <img src={post.media_url} alt={post.media_name ?? ''} className="rounded-2xl w-full object-cover border border-slate-100 hover:opacity-95 transition-opacity mt-2" style={{ maxHeight: 360, cursor: 'zoom-in' }}
-                                    onClick={() => { setLightboxSrc(post.media_url!); setLightboxName(post.media_name ?? 'image') }} />
+                                ? (post.media_urls && post.media_urls.length > 1
+                                    ? <PostCarousel images={post.media_urls} onOpen={(src) => { setLightboxSrc(src); setLightboxName(post.media_name ?? 'image') }} />
+                                    : <img src={post.media_url} alt={post.media_name ?? ''} className="rounded-2xl w-full object-cover border border-slate-100 hover:opacity-95 transition-opacity mt-2" style={{ maxHeight: 360, cursor: 'zoom-in' }}
+                                        onClick={() => { setLightboxSrc(post.media_url!); setLightboxName(post.media_name ?? 'image') }} />)
                                 : <div className="mt-2 flex items-center gap-3 bg-slate-50 rounded-xl p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
                                     onClick={() => downloadChannelMedia(post.media_url!, post.media_name ?? 'document.pdf')}>
                                     <span className="text-xl">📄</span>
@@ -792,17 +828,29 @@ export default function ChannelDetailPage() {
                 {/* Composer — sticky at bottom */}
                 {isJoined ? (
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm channel-composer" style={{ flexShrink: 0, padding: '10px 12px' }}>
-                    <input type="file" ref={fileRef} className="hidden" accept="image/*,application/pdf" onChange={handleFile} />
-                    {/* Media preview */}
-                    {msgMedia && (
+                    <input type="file" ref={fileRef} className="hidden" accept="image/*,application/pdf" multiple onChange={handleFile} />
+                    {/* Media preview — plusieurs photos (vignettes) ou un PDF */}
+                    {msgImages.length > 0 && (
+                      <div className="mb-2 flex flex-wrap gap-2">
+                        {msgImages.map((img, idx) => (
+                          <div key={idx} className="relative">
+                            <img src={img.dataUrl} alt={img.name} className="rounded-xl object-cover border border-slate-100" style={{ width: 72, height: 72 }} />
+                            <button onClick={() => setMsgImages(prev => prev.filter((_, i) => i !== idx))}
+                              className="absolute -top-1.5 -right-1.5 bg-white rounded-full w-5 h-5 text-slate-500 text-xs flex items-center justify-center shadow border border-slate-200">✕</button>
+                          </div>
+                        ))}
+                        {msgImages.length > 1 && (
+                          <span className="self-end text-[11px] text-slate-400 font-medium pb-1">{msgImages.length} photos</span>
+                        )}
+                      </div>
+                    )}
+                    {msgPdf && (
                       <div className="mb-2 relative">
-                        {msgMedia.type === 'image'
-                          ? <img src={msgMedia.dataUrl} alt={msgMedia.name} className="rounded-xl object-cover border border-slate-100" style={{ maxHeight: 120, maxWidth: '100%' }} />
-                          : <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-2 border border-slate-200">
-                              <span>📄</span>
-                              <p className="text-xs font-semibold truncate">{msgMedia.name}</p>
-                            </div>}
-                        <button onClick={() => setMsgMedia(null)}
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-2 border border-slate-200">
+                          <span>📄</span>
+                          <p className="text-xs font-semibold truncate">{msgPdf.name}</p>
+                        </div>
+                        <button onClick={() => setMsgPdf(null)}
                           className="absolute top-1 right-1 bg-white rounded-full w-5 h-5 text-slate-500 text-xs flex items-center justify-center shadow border border-slate-200">✕</button>
                       </div>
                     )}
@@ -833,7 +881,7 @@ export default function ChannelDetailPage() {
                           className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                           <IconFile />
                         </button>
-                        {(msgText.trim() || msgMedia) && (
+                        {(msgText.trim() || hasMsgMedia) && (
                           <button onClick={handleSend} disabled={sending}
                             className="w-8 h-8 rounded-xl text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center"
                             style={{ background: '#1a3055' }}>

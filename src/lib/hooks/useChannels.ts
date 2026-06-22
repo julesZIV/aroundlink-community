@@ -12,7 +12,7 @@ export type ChannelPostComment = {
 }
 export type ChannelPostWithProfile = {
   id: string; channel_id: string; user_id: string; text: string | null
-  media_type: string | null; media_url: string | null; media_name: string | null
+  media_type: string | null; media_url: string | null; media_name: string | null; media_urls: string[] | null
   created_at: string
   profiles: { name: string; first_name: string | null; last_name: string | null; avatar_url: string | null } | null
   likes: ChannelPostLike[]
@@ -99,11 +99,14 @@ export function useChannels(
   }, [userId])
 
   const sendMessage = useCallback(async (
-    cId: string, text: string, media?: { type: 'image'|'pdf'; url: string; name: string } | null
+    cId: string, text: string, media?: { type: 'image'|'pdf'; url: string; name: string; urls?: string[] } | null
   ): Promise<{ data: any; error: string | null }> => {
     if (!userId) return { data: null, error: 'Not logged in' }
     const row: any = { channel_id: cId, user_id: userId, text: text || null }
-    if (media) { row.media_type = media.type; row.media_url = media.url; row.media_name = media.name }
+    if (media) {
+      row.media_type = media.type; row.media_url = media.url; row.media_name = media.name
+      if (media.urls && media.urls.length > 1) row.media_urls = media.urls
+    }
     const { data, error } = await supabase.from('channel_posts').insert(row).select().single()
     if (error) { pushError(`Message not sent: ${error.message}`); return { data: null, error: error.message } }
     if (data) {
