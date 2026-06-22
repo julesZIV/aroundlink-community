@@ -110,10 +110,11 @@ export type Database = {
           description: string | null
           member_count: number
           is_official: boolean | null
+          is_active: boolean
           created_by: string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['channels']['Row'], 'created_at' | 'member_count'>
+        Insert: Omit<Database['public']['Tables']['channels']['Row'], 'created_at' | 'member_count' | 'is_active'> & { is_active?: boolean }
         Update: Partial<Database['public']['Tables']['channels']['Insert']>
       }
       channel_members: {

@@ -24,6 +24,16 @@ const IcoFile = () => (
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
   </svg>
 )
+const IcoEye = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+  </svg>
+)
+const IcoEyeOff = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/>
+  </svg>
+)
 
 type InviteUser = { id: string; name: string | null; first_name: string | null; last_name: string | null; institution: string | null }
 function inviteDisplayName(u: InviteUser) {
@@ -71,7 +81,7 @@ export default function ChannelsPage() {
     ? (`${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || profile.name || '')
     : ''
 
-  const { channels, myChannelIds, joinChannel, leaveChannel, loading, createChannel } = useChannels(user?.id)
+  const { channels, myChannelIds, joinChannel, leaveChannel, loading, createChannel, updateChannel } = useChannels(user?.id)
   const { unreadCounts } = useSidebarData(user?.id)
 
   type ChStats = { members: number; posts: number; files: number }
@@ -202,10 +212,21 @@ export default function ChannelsPage() {
 
   const renderCard = (ch: Channel, joined: boolean) => {
     const unread = joined ? (unreadCounts[ch.id] ?? 0) : 0
+    const inactive = ch.is_active === false
     return (
       <div key={ch.id}
         className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow cursor-pointer relative"
+        style={inactive ? { opacity: 0.6 } : undefined}
         onClick={() => router.push(`/channels/${ch.id}`)}>
+        {canManage && (
+          <button
+            onClick={e => { e.stopPropagation(); updateChannel(ch.id, { is_active: inactive }) }}
+            title={inactive ? 'Reactivate — make visible to members' : 'Deactivate — hide from members'}
+            className="absolute top-2 right-2 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            style={{ zIndex: 2 }}>
+            {inactive ? <IcoEyeOff /> : <IcoEye />}
+          </button>
+        )}
         <div className="flex items-start gap-3">
           <div className="relative flex-shrink-0">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ background: '#eef6ff' }}>
@@ -222,6 +243,7 @@ export default function ChannelsPage() {
             <div className="flex items-center gap-2">
               <p className={`font-bold text-sm ${unread > 0 ? 'text-slate-900' : 'text-slate-800'}`}>#{ch.name}</p>
               {joined && <span className="text-xs bg-blue-50 text-blue-700 border border-blue-100 rounded-full px-2 py-0.5 font-semibold">Joined</span>}
+              {inactive && <span className="text-xs bg-slate-100 text-slate-500 border border-slate-200 rounded-full px-2 py-0.5 font-semibold">Hidden</span>}
             </div>
             <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{ch.description}</p>
           </div>

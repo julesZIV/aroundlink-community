@@ -228,10 +228,18 @@ export default function ProfilePage() {
           // Known university → auto-set + auto-save if institution was empty
           setDetectedInstitution(name)
           setInstitutionVerified(true)
+          // Tente de rattacher aussi la fiche ROR (seulement si correspondance EXACTE,
+          // pour ne jamais poser un mauvais university_id automatiquement).
+          const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+          const { data: uniMatches } = await supabase.rpc('search_universities', { q: name, lim: 1 })
+          const matchedUniId: number | null = uniMatches?.[0] && norm(uniMatches[0].display_name) === norm(name)
+            ? uniMatches[0].id : null
           if (!profile.institution) {
             setInstitution(name)
+            if (matchedUniId) setUniversityId(matchedUniId)
             await supabase.from('profiles').update({
               institution: name,
+              university_id: matchedUniId,
               institution_verified: true,
               institution_domain: domainNorm,   // normalized: neoma-bs.fr → neoma-bs
             }).eq('id', user.id)
@@ -260,8 +268,14 @@ export default function ProfilePage() {
   }
 
   const handleSave = async () => {
-    setSaving(true)
     setSaveError(null)
+    // Anti-doublons : si une institution est renseignée, elle doit être choisie
+    // dans la liste officielle (ROR) — donc university_id doit être rempli.
+    if (institution.trim() && universityId === null) {
+      setSaveError('Please pick your university from the suggestions so it links to the official directory — this prevents duplicates.')
+      return
+    }
+    setSaving(true)
     const fullName = `${firstName} ${lastName}`.trim()
     try {
       const result = await updateProfile({

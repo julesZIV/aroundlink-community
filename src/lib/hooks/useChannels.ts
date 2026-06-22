@@ -176,7 +176,7 @@ export function useChannels(
     return null
   }, [userId])
 
-  const updateChannel = useCallback(async (channelId: string, fields: { emoji?: string; name?: string; description?: string }): Promise<string | null> => {
+  const updateChannel = useCallback(async (channelId: string, fields: { emoji?: string; name?: string; description?: string; is_active?: boolean }): Promise<string | null> => {
     const { data, error } = await supabase.from('channels').update(fields).eq('id', channelId).select().single()
     if (error) { pushError(`Channel update error: ${error.message}`); return error.message }
     if (data) setChannels(prev => prev.map(c => c.id === channelId ? data : c).sort((a, b) => a.name.localeCompare(b.name)))
