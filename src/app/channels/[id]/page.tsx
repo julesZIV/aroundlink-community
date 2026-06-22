@@ -136,7 +136,7 @@ export default function ChannelDetailPage() {
     setShowEditChannel(false)
   }
   // All media posts for this channel (Documents tab — unlimited, separate fetch)
-  type MediaPost = { id: string; media_type: string; media_url: string; media_name: string | null; created_at: string; profiles: { name: string | null } | null }
+  type MediaPost = { id: string; media_type: string; media_url: string; media_urls: string[] | null; media_name: string | null; created_at: string; profiles: { name: string | null } | null }
   const [allMediaPosts, setAllMediaPosts] = useState<MediaPost[]>([])
   const [expanded, setExp]   = useState<Record<string, boolean>>({})  // expanded comments
   const [cText, setCText]    = useState<Record<string, string>>({})   // comment inputs
@@ -175,7 +175,7 @@ export default function ChannelDetailPage() {
   useEffect(() => {
     if (!id) return
     supabase.from('channel_posts')
-      .select('id, media_type, media_url, media_name, created_at, profiles!channel_posts_user_id_fkey(name)')
+      .select('id, media_type, media_url, media_urls, media_name, created_at, profiles!channel_posts_user_id_fkey(name)')
       .eq('channel_id', id)
       .not('media_url', 'is', null)
       .order('created_at', { ascending: false })
@@ -298,16 +298,22 @@ export default function ChannelDetailPage() {
     const files = Array.from(e.target.files ?? [])
     e.target.value = ''
     if (!files.length) return
-    // PDF (un seul) — exclusif des images
-    if (files[0].type === 'application/pdf') {
-      const f = files[0]
+    const pdfs = files.filter(f => f.type === 'application/pdf')
+    const imgs = files.filter(f => f.type.startsWith('image/'))
+    // Mélange photos + PDF : un post ne peut pas contenir les deux → on garde les photos
+    if (pdfs.length && imgs.length) {
+      alert('A post can contain either photos or a PDF — not both. Keeping the photos; the PDF was skipped.')
+    }
+    // PDF seul (exclusif des images)
+    else if (pdfs.length) {
+      const f = pdfs[0]
+      if (pdfs.length > 1) alert('Only one PDF per post — keeping the first one.')
       if (f.size > 20 * 1024 * 1024) { alert('PDF must be under 20 MB.'); return }
       setMsgPdf({ dataUrl: await readDataUrl(f), name: f.name })
       setMsgImages([])
       return
     }
     // Images (potentiellement plusieurs) — exclusives du PDF
-    const imgs = files.filter(f => f.type.startsWith('image/'))
     const oversized = imgs.filter(f => f.size > 5 * 1024 * 1024)
     if (oversized.length) alert(`Skipped (over 5 MB): ${oversized.map(f => f.name).join(', ')}`)
     const valid = imgs.filter(f => f.size <= 5 * 1024 * 1024)
@@ -387,7 +393,12 @@ export default function ChannelDetailPage() {
     setSending(false)
   }
 
-  const mediaPostsCount = channelPosts.filter(p => p.media_url).length
+  // Compte chaque photo (un post multi-photos compte pour N), pour coller à la galerie
+  const mediaPostsCount = channelPosts.reduce((acc, p) => {
+    if (!p.media_url) return acc
+    if (p.media_type === 'image') return acc + (p.media_urls && p.media_urls.length > 0 ? p.media_urls.length : 1)
+    return acc + 1
+  }, 0)
 
   // Top contributor — member with most posts in this channel
   const postCountByUser = channelPosts.reduce<Record<string, number>>((acc, p) => {
@@ -905,7 +916,13 @@ export default function ChannelDetailPage() {
             {/* Documents Tab */}
             {tab === 'documents' && (() => {
               const mediaPosts = allMediaPosts
-              const totalDocs  = mediaPosts.length + channelUploads.length
+              // Une vignette par photo : on déplie les posts à plusieurs images (media_urls)
+              const imageItems = mediaPosts
+                .filter(p => p.media_type === 'image')
+                .flatMap(p => (p.media_urls && p.media_urls.length > 0 ? p.media_urls : [p.media_url])
+                  .map((url, idx) => ({ key: `${p.id}-${idx}`, url, name: p.media_name })))
+              const pdfPosts   = mediaPosts.filter(p => p.media_type === 'pdf')
+              const totalDocs  = imageItems.length + pdfPosts.length + channelUploads.length
               return (
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                   <div className="mb-4">
@@ -919,21 +936,21 @@ export default function ChannelDetailPage() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {mediaPosts.filter(p => p.media_type === 'image').length > 0 && (
+                      {imageItems.length > 0 && (
                         <div>
                           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">🖼️ Photos</p>
                           <div className="grid grid-cols-3 gap-2 mb-4">
-                            {mediaPosts.filter(p => p.media_type === 'image').map(p => (
-                              <img key={p.id} src={p.media_url!} alt={p.media_name ?? ''} className="w-full h-24 object-cover rounded-xl border border-slate-100 hover:opacity-90 transition-opacity" style={{ cursor: 'zoom-in' }} onClick={() => setLightboxSrc(p.media_url!)} />
+                            {imageItems.map(img => (
+                              <img key={img.key} src={img.url} alt={img.name ?? ''} className="w-full h-24 object-cover rounded-xl border border-slate-100 hover:opacity-90 transition-opacity" style={{ cursor: 'zoom-in' }} onClick={() => setLightboxSrc(img.url)} />
                             ))}
                           </div>
                         </div>
                       )}
-                      {(mediaPosts.filter(p => p.media_type === 'pdf').length > 0 || channelUploads.length > 0) && (
+                      {(pdfPosts.length > 0 || channelUploads.length > 0) && (
                         <div>
                           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">📄 Documents</p>
                           <div className="space-y-2">
-                            {mediaPosts.filter(p => p.media_type === 'pdf').map(p => (
+                            {pdfPosts.map(p => (
                               <div key={p.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-3 flex items-center gap-3">
                                 <span className="text-2xl flex-shrink-0">📕</span>
                                 <div className="flex-1 min-w-0">

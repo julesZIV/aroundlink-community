@@ -70,16 +70,22 @@ export default function FeedPage() {
     const files = Array.from(e.target.files ?? [])
     e.target.value = ''
     if (!files.length) return
-    // PDF (un seul) — exclusif des images
-    if (files[0].type === 'application/pdf') {
-      const f = files[0]
+    const pdfs = files.filter(f => f.type === 'application/pdf')
+    const imgs = files.filter(f => f.type.startsWith('image/'))
+    // Mélange photos + PDF : un post ne peut pas contenir les deux → on garde les photos
+    if (pdfs.length && imgs.length) {
+      alert('A post can contain either photos or a PDF — not both. Keeping the photos; the PDF was skipped.')
+    }
+    // PDF seul (exclusif des images)
+    else if (pdfs.length) {
+      const f = pdfs[0]
+      if (pdfs.length > 1) alert('Only one PDF per post — keeping the first one.')
       if (f.size > 20 * 1024 * 1024) { alert('PDF must be under 20 MB.'); return }
       setPdf({ dataUrl: await readDataUrl(f), name: f.name })
       setImages([])
       return
     }
     // Images (potentiellement plusieurs) — exclusives du PDF
-    const imgs = files.filter(f => f.type.startsWith('image/'))
     const oversized = imgs.filter(f => f.size > 5 * 1024 * 1024)
     if (oversized.length) alert(`Skipped (over 5 MB): ${oversized.map(f => f.name).join(', ')}`)
     const valid = imgs.filter(f => f.size <= 5 * 1024 * 1024)
