@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AvatarImg from '@/components/ui/AvatarImg'
+import { isAroundLinkOrg } from '@/lib/isAroundLink'
 
 type Member = {
   id: string
@@ -83,6 +84,7 @@ export default function InstitutionsView({ externalSearch = '' }: { externalSear
       for (const p of profiles) {
         const key = (p.institution ?? '').trim()
         if (!key) continue
+        if (isAroundLinkOrg(key)) continue  // organisateur exclu de l'annuaire/classement
         if (!grouped[key]) grouped[key] = { members: [], university_id: p.university_id ?? null }
         grouped[key].members.push({
           id: p.id,

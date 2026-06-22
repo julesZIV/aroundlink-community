@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import AppShell from '@/components/layout/AppShell'
 import { useAuth } from '@/lib/hooks/useAuth'
 import AvatarImg from '@/components/ui/AvatarImg'
+import { isAroundLinkOrg } from '@/lib/isAroundLink'
 
 type Member = {
   id: string
@@ -71,7 +72,8 @@ export default function LeaderboardPage() {
         .gt('links', 0)
         .order('links', { ascending: false })
         .limit(200)
-      setMembers((data ?? []) as Member[])
+      // AroundLink (organisateur) exclu de TOUS les classements — score conservé ailleurs
+      setMembers(((data ?? []) as Member[]).filter(m => !isAroundLinkOrg(m.institution)))
 
       // Custom org logos uploaded by admins, keyed by normalised institution name
       const { data: logoRows } = await supabase.from('org_logos').select('name_key, logo_url')

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useState, useEffect, useMemo } from 'react'
 import type { Profile } from '@/lib/supabase/supabase/types'
 import AvatarImg from '@/components/ui/AvatarImg'
+import { isAroundLinkOrg } from '@/lib/isAroundLink'
 
 type Contributor = { id: string; name: string | null; first_name: string | null; last_name: string | null; institution: string | null; links: number; avatar_url: string | null }
 type Institution = { name: string; totalLinks: number; memberCount: number; logoUrl: string | null }
@@ -46,7 +47,8 @@ export default function RightPanel({ profile }: { profile: Profile | null }) {
       .order('links', { ascending: false })
       .gt('links', 0)
       .limit(100)
-      .then(({ data }) => { if (data) setContributors(data as Contributor[]) })
+      // AroundLink (organisateur) exclu des classements du panneau latéral
+      .then(({ data }) => { if (data) setContributors((data as Contributor[]).filter(c => !isAroundLinkOrg(c.institution))) })
     // Logos d'organisations uploadés par les admins (clés = nom normalisé)
     supabase.from('org_logos').select('name_key, logo_url').then(({ data }) => {
       if (data) {

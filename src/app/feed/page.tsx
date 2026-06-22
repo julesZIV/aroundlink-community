@@ -45,6 +45,25 @@ export default function FeedPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
+  // Galerie : tous les fichiers/photos partagés dans le feed (fetch séparé, non paginé)
+  type FeedMedia = { id: string; media_type: string; media_url: string; media_urls: string[] | null; media_name: string | null; created_at: string; profiles: { name: string | null } | null }
+  const [showFiles, setShowFiles] = useState(false)
+  const [feedMedia, setFeedMedia] = useState<FeedMedia[]>([])
+  useEffect(() => {
+    supabase.from('feed_posts')
+      .select('id, media_type, media_url, media_urls, media_name, created_at, profiles!feed_posts_user_id_fkey(name)')
+      .not('media_url', 'is', null)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { if (data) setFeedMedia(data as unknown as FeedMedia[]) })
+  }, [posts.length])
+  // Une vignette par photo (on déplie les posts multi-photos) + les PDF à part
+  const feedPhotoItems = feedMedia
+    .filter(p => p.media_type === 'image')
+    .flatMap(p => (p.media_urls && p.media_urls.length > 0 ? p.media_urls : [p.media_url])
+      .map((url, idx) => ({ key: `${p.id}-${idx}`, url, name: p.media_name })))
+  const feedPdfPosts = feedMedia.filter(p => p.media_type === 'pdf')
+  const feedFilesCount = feedPhotoItems.length + feedPdfPosts.length
+
   // Affiche la modale d'onboarding si le profil est incomplet (1er login)
   useEffect(() => {
     if (!profile) return
@@ -210,6 +229,13 @@ export default function FeedPage() {
       )}
 
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Accès aux fichiers & photos partagés dans le feed */}
+        <div className="flex justify-end mb-3">
+          <button onClick={() => setShowFiles(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">
+            <IconFile /> Files &amp; photos{feedFilesCount > 0 ? ` (${feedFilesCount})` : ''}
+          </button>
+        </div>
         {/* Composer */}
         <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-5 shadow-sm">
           <div className="flex items-start gap-3">
@@ -502,6 +528,61 @@ export default function FeedPage() {
         filename={lightboxName}
         onClose={() => { setLightboxSrc(null); setLightboxName('') }}
       />
+    )}
+
+    {/* Galerie des fichiers & photos partagés dans le feed */}
+    {showFiles && (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        onClick={() => setShowFiles(false)}>
+        <div onClick={e => e.stopPropagation()}
+          style={{ background: 'white', borderRadius: 20, width: '100%', maxWidth: 560, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+          <div className="flex items-center justify-between p-4 border-b border-slate-100">
+            <p className="font-bold text-slate-800">📎 Files &amp; photos <span className="font-normal text-slate-400 text-sm">({feedFilesCount})</span></p>
+            <button onClick={() => setShowFiles(false)} className="w-7 h-7 rounded-full text-slate-500 hover:bg-slate-100 flex items-center justify-center">✕</button>
+          </div>
+          <div className="p-4 overflow-y-auto">
+            {feedFilesCount === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-3xl mb-2">📂</p>
+                <p className="font-semibold text-slate-600">No files yet</p>
+                <p className="text-xs text-slate-400 mt-1">Photos and PDFs shared in the feed will show up here</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {feedPhotoItems.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">🖼️ Photos</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {feedPhotoItems.map(img => (
+                        <img key={img.key} src={img.url} alt={img.name ?? ''} className="w-full h-24 object-cover rounded-xl border border-slate-100 hover:opacity-90 transition-opacity" style={{ cursor: 'zoom-in' }}
+                          onClick={() => { setShowFiles(false); setLightboxSrc(img.url); setLightboxName(img.name ?? 'image') }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {feedPdfPosts.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">📄 Documents</p>
+                    <div className="space-y-2">
+                      {feedPdfPosts.map(p => (
+                        <div key={p.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-3 flex items-center gap-3">
+                          <span className="text-2xl flex-shrink-0">📕</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-slate-700 truncate">{p.media_name ?? 'Document'}</p>
+                            <p className="text-xs text-slate-400">{p.profiles?.name ?? 'Member'} · {new Date(p.created_at).toLocaleDateString('en-GB')}</p>
+                          </div>
+                          <button onClick={() => downloadMedia(p.media_url!, p.media_name ?? 'document.pdf')}
+                            className="text-xs font-semibold text-blue-600 hover:underline flex-shrink-0">Download →</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     )}
 
     {/* Modal confirmation suppression de post */}

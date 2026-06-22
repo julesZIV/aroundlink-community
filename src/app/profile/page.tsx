@@ -254,13 +254,9 @@ export default function ProfilePage() {
 
   const fetchInstitutionSuggestions = async (q: string) => {
     if (!q.trim() || q.length < 2) { setInstitutionSuggestions([]); return }
-    const { data } = await supabase
-      .from('universities')
-      .select('id, display_name, city, country_name, flag')
-      .ilike('display_name', `%${q}%`)
-      .order('display_name')
-      .limit(8)
-    setInstitutionSuggestions(data ?? [])
+    // Recherche ROR robuste : accent-insensible + multi-mots (RPC search_universities)
+    const { data } = await supabase.rpc('search_universities', { q, lim: 8 })
+    setInstitutionSuggestions((data ?? []) as typeof institutionSuggestions)
   }
 
   const handleSave = async () => {
@@ -622,6 +618,11 @@ export default function ProfilePage() {
                 )}
                 {detectedInstitution && !profile?.institution && (
                   <p className="text-xs text-green-600 mt-1">✓ Automatically detected from your institutional email</p>
+                )}
+                {universityId !== null ? (
+                  <p className="text-xs text-green-600 mt-1">✓ Linked to the official directory</p>
+                ) : institution.trim().length >= 2 && (
+                  <p className="text-xs text-amber-600 mt-1">💡 Pick your university from the list so it's linked correctly — this keeps everyone under the same institution.</p>
                 )}
               </div>
               <div>

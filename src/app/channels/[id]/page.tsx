@@ -11,6 +11,7 @@ import { renderMentions } from '@/components/ui/renderMentions'
 import ImageLightbox from '@/components/ui/ImageLightbox'
 import AvatarImg from '@/components/ui/AvatarImg'
 import PostCarousel from '@/components/ui/PostCarousel'
+import { isAroundLinkOrg } from '@/lib/isAroundLink'
 
 // Minimalist SVG icons (no emoji)
 const IconImage = () => (
@@ -401,7 +402,12 @@ export default function ChannelDetailPage() {
   }, 0)
 
   // Top contributor — member with most posts in this channel
+  // AroundLink (organisateur) exclu du classement des contributeurs
+  const aroundLinkMemberIds = new Set(
+    members.filter(m => isAroundLinkOrg(m.profiles?.institution)).map(m => m.user_id)
+  )
   const postCountByUser = channelPosts.reduce<Record<string, number>>((acc, p) => {
+    if (aroundLinkMemberIds.has(p.user_id)) return acc
     acc[p.user_id] = (acc[p.user_id] ?? 0) + 1
     return acc
   }, {})
