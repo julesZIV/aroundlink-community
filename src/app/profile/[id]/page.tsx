@@ -9,7 +9,7 @@ import AvatarImg from '@/components/ui/AvatarImg'
 
 type PublicProfile = {
   id: string; name: string | null; first_name: string | null; last_name: string | null
-  institution: string | null; role: string | null; linkedin: string | null
+  institution: string | null; university_id: number | null; role: string | null; linkedin: string | null
   avatar_url: string | null; links: number; created_at: string
 }
 
@@ -44,9 +44,44 @@ function getInitials(name: string) {
 
 export default function UserProfilePage() {
   const { id } = useParams<{ id: string }>()
-  const { user } = useAuth()
+  const { user, profile: viewerProfile } = useAuth()
   const router = useRouter()
   const supabase = createClient()
+  const canManage = ['admin', 'moderator'].includes(viewerProfile?.app_role ?? '')
+
+  // Admin : rattacher ce membre à une université ROR
+  const [editingInst,   setEditingInst]   = useState(false)
+  const [instQuery,     setInstQuery]     = useState('')
+  const [instResults,   setInstResults]   = useState<{ id: number; display_name: string; city: string | null; country_name: string | null; flag: string | null }[]>([])
+  const [savingInst,    setSavingInst]    = useState(false)
+  const [instError,     setInstError]     = useState<string | null>(null)
+
+  const searchInst = async (q: string) => {
+    setInstQuery(q)
+    if (!q.trim() || q.length < 2) { setInstResults([]); return }
+    const { data } = await supabase.rpc('search_universities', { q, lim: 8 })
+    setInstResults((data ?? []) as typeof instResults)
+  }
+
+  const assignInstitution = async (universityId: number | null) => {
+    if (!profile) return
+    setSavingInst(true); setInstError(null)
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-institution', userId: profile.id, universityId }),
+      })
+      const json = await res.json()
+      if (!res.ok) { setInstError(json.error ?? 'Could not update'); return }
+      setProfile(p => p ? { ...p, institution: json.institution, university_id: json.university_id } : p)
+      setEditingInst(false); setInstQuery(''); setInstResults([])
+    } catch (e: any) {
+      setInstError(e?.message ?? 'Unknown error')
+    } finally {
+      setSavingInst(false)
+    }
+  }
 
   const [profile,        setProfile]        = useState<PublicProfile | null>(null)
   const [stats,          setStats]          = useState<Stats | null>(null)
@@ -67,7 +102,7 @@ export default function UserProfilePage() {
       // Profile
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('id, name, first_name, last_name, institution, role, linkedin, avatar_url, links, created_at')
+        .select('id, name, first_name, last_name, institution, university_id, role, linkedin, avatar_url, links, created_at')
         .eq('id', id)
         .single()
 
@@ -191,6 +226,46 @@ export default function UserProfilePage() {
                     <span style={{ fontSize: 12, color: '#94a3b8' }}>{RANK_LABEL}</span>
                     <span style={{ fontSize: 12, color: '#94a3b8' }}>· Since {memberSince}</span>
                   </div>
+
+                  {/* Admin : rattacher ce membre à une université officielle (ROR) */}
+                  {canManage && (
+                    <div style={{ marginTop: 10 }}>
+                      {!editingInst ? (
+                        <button onClick={() => { setEditingInst(true); setInstQuery(''); setInstResults([]); setInstError(null) }}
+                          style={{ fontSize: 12, fontWeight: 600, color: '#1a3055', background: '#eef2ff', border: '1px solid #e0e7ff', borderRadius: 999, padding: '4px 11px', cursor: 'pointer' }}>
+                          🏛️ {profile.university_id ? 'Change institution' : 'Set institution'} (admin)
+                        </button>
+                      ) : (
+                        <div style={{ position: 'relative', maxWidth: 380 }}>
+                          <input autoFocus value={instQuery} onChange={e => searchInst(e.target.value)}
+                            placeholder="Search the official university list…"
+                            style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 10px', fontSize: 13, outline: 'none' }} />
+                          {instResults.length > 0 && (
+                            <div style={{ position: 'absolute', zIndex: 50, left: 0, right: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4, maxHeight: 240, overflowY: 'auto' }}>
+                              {instResults.map(u => (
+                                <button key={u.id} onClick={() => assignInstitution(u.id)} disabled={savingInst}
+                                  style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'none', border: 'none', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center' }}>
+                                  <span style={{ fontSize: 15, flexShrink: 0 }}>{u.flag ?? '🏛️'}</span>
+                                  <span style={{ minWidth: 0 }}>
+                                    <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.display_name}</span>
+                                    {(u.city || u.country_name) && <span style={{ display: 'block', fontSize: 11, color: '#94a3b8' }}>{[u.city, u.country_name].filter(Boolean).join(', ')}</span>}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', gap: 12, marginTop: 6, alignItems: 'center' }}>
+                            <button onClick={() => { setEditingInst(false); setInstError(null) }} style={{ fontSize: 12, color: '#64748b', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                            {profile.university_id && (
+                              <button onClick={() => assignInstitution(null)} disabled={savingInst} style={{ fontSize: 12, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>Remove</button>
+                            )}
+                            {savingInst && <span style={{ fontSize: 12, color: '#94a3b8' }}>Saving…</span>}
+                          </div>
+                          {instError && <p style={{ fontSize: 12, color: '#dc2626', marginTop: 4 }}>⚠️ {instError}</p>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

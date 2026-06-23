@@ -40,6 +40,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  // ── set-institution (rattacher un membre à une université ROR) ───────────────
+  if (action === 'set-institution') {
+    // admins ET modérateurs (déjà filtrés en haut)
+    const { userId, universityId } = body
+    if (!userId) return NextResponse.json({ error: 'Invalid params' }, { status: 400 })
+    // Retrait de l'institution
+    if (universityId == null) {
+      const { error } = await admin.from('profiles')
+        .update({ institution: null, university_id: null }).eq('id', userId)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ ok: true, institution: null, university_id: null })
+    }
+    // Rattachement : on prend le nom ROR canonique côté serveur (texte propre garanti)
+    const { data: uni } = await admin.from('universities')
+      .select('display_name').eq('id', universityId).single()
+    if (!uni) return NextResponse.json({ error: 'Unknown university' }, { status: 400 })
+    const { error } = await admin.from('profiles')
+      .update({ institution: uni.display_name, university_id: universityId }).eq('id', userId)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true, institution: uni.display_name, university_id: universityId })
+  }
+
   // ── anonymize ───────────────────────────────────────────────────────────────
   if (action === 'anonymize') {
     if (caller.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
