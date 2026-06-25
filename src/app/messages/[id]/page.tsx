@@ -7,6 +7,7 @@ import { useMessages, useConversations, displayName, initials } from '@/lib/hook
 import { createClient } from '@/lib/supabase/client'
 import ImageLightbox from '@/components/ui/ImageLightbox'
 import AvatarImg from '@/components/ui/AvatarImg'
+import { linkifyText } from '@/components/ui/renderMentions'
 
 // Minimalist SVG icons
 const IconImage = () => (
@@ -368,7 +369,7 @@ export default function ConversationPage() {
                               <span style={{ fontSize: 12, fontWeight: 600 }}>{msg.media_name ?? 'Document'}</span>
                             </a>
                           )}
-                          {msg.text && <span style={{ display: msg.media_url ? 'block' : 'inline', marginTop: msg.media_url ? 4 : 0, whiteSpace: 'pre-wrap' }}>{msg.text}</span>}
+                          {msg.text && <span style={{ display: msg.media_url ? 'block' : 'inline', marginTop: msg.media_url ? 4 : 0, whiteSpace: 'pre-wrap' }}>{linkifyText(msg.text, { className: 'hover:opacity-80', style: { color: isMe ? '#fff' : '#2563eb', textDecoration: 'underline', wordBreak: 'break-word' } })}</span>}
                         </div>
                         {(i === group.msgs.length - 1 || group.msgs[i + 1]?.sender_id !== msg.sender_id) && (
                           <p style={{

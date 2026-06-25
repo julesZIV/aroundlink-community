@@ -3,8 +3,16 @@ import React from 'react'
 /** URL http(s):// ou www. — capturée pour être rendue en lien cliquable. */
 const URL_RE = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi
 
-/** Transforme les URLs d'un fragment de texte en liens cliquables (http/https only). */
-function linkify(text: string, keyBase: string): React.ReactNode[] {
+/**
+ * Transforme les URLs d'un fragment de texte en liens cliquables (http/https only).
+ * `opts.className` / `opts.style` permettent d'adapter la couleur (ex. bulles sombres des DM).
+ */
+export function linkifyText(
+  text: string,
+  opts?: { className?: string; style?: React.CSSProperties },
+  keyBase = 'l',
+): React.ReactNode[] {
+  const cls = opts?.className ?? 'text-blue-600 hover:underline break-all'
   return text.split(URL_RE).map((part, i) => {
     if (!part) return null
     if (/^(https?:\/\/|www\.)/i.test(part)) {
@@ -15,7 +23,7 @@ function linkify(text: string, keyBase: string): React.ReactNode[] {
       return (
         <React.Fragment key={`${keyBase}-${i}`}>
           <a href={href} target="_blank" rel="noopener noreferrer nofollow"
-            className="text-blue-600 hover:underline break-all"
+            className={cls} style={opts?.style}
             onClick={e => e.stopPropagation()}>{url}</a>
           {trail}
         </React.Fragment>
@@ -51,6 +59,6 @@ export function renderMentions(text: string): React.ReactNode[] {
       )
     }
     // Texte normal → on rend les URLs cliquables
-    return <React.Fragment key={i}>{linkify(part, String(i))}</React.Fragment>
+    return <React.Fragment key={i}>{linkifyText(part, undefined, String(i))}</React.Fragment>
   })
 }
