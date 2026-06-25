@@ -49,6 +49,27 @@ export function useFeed(userId: string | undefined) {
 
   useEffect(() => { fetchPosts() }, [fetchPosts])
 
+  // Temps réel : les nouveaux commentaires apparaissent pour TOUS (pas seulement l'auteur du post)
+  useEffect(() => {
+    const channel = supabase
+      .channel('feed-comments-rt')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feed_comments' },
+        async (payload) => {
+          const c = payload.new as FeedComment
+          // Profil de l'auteur du commentaire (le payload brut ne le contient pas)
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('name, first_name, last_name, institution, avatar_url')
+            .eq('id', c.user_id).single()
+          setPosts(prev => prev.map(p =>
+            p.id === c.post_id && !p.comments.some(x => x.id === c.id)
+              ? { ...p, comments: [...p.comments, { ...c, profiles: (prof ?? null) as ProfileMini | null }] }
+              : p))
+        })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [supabase])
+
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return
     setLoadingMore(true)
