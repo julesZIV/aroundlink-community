@@ -37,6 +37,8 @@ export default function FeedPage() {
   const [postError, setPostError] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [lightboxSrc,  setLightboxSrc]  = useState<string | null>(null)
+  const [lightboxImages, setLightboxImages] = useState<string[] | null>(null)
+  const [lightboxIndex,  setLightboxIndex]  = useState(0)
   const [lightboxName, setLightboxName] = useState<string>('')
   const [likersIds,    setLikersIds]    = useState<string[] | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
@@ -398,11 +400,11 @@ export default function FeedPage() {
                     post.text && <p className="text-sm text-slate-700 mt-2 leading-relaxed whitespace-pre-wrap">{renderMentions(post.text)}</p>
                   )}
                   {post.media_type === 'image' && post.media_urls && post.media_urls.length > 1 ? (
-                    <PostCarousel images={post.media_urls} onOpen={(src) => { setLightboxSrc(src); setLightboxName(post.media_name ?? 'image') }} />
+                    <PostCarousel images={post.media_urls} onOpen={(imgs, idx) => { setLightboxImages(imgs); setLightboxIndex(idx); setLightboxSrc(imgs[idx]); setLightboxName(post.media_name ?? 'image') }} />
                   ) : post.media_url && (
                     post.media_type === 'image'
                       ? <img src={post.media_url} alt={post.media_name ?? ''} className="mt-2 rounded-xl w-full object-cover" style={{ maxHeight: 280, cursor: 'zoom-in' }}
-                          onClick={() => { setLightboxSrc(post.media_url!); setLightboxName(post.media_name ?? 'image') }}/>
+                          onClick={() => { setLightboxImages(null); setLightboxSrc(post.media_url!); setLightboxName(post.media_name ?? 'image') }}/>
                       : <div className="mt-2 flex items-center gap-3 bg-slate-50 rounded-xl p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
                           onClick={() => post.media_url && downloadMedia(post.media_url, post.media_name ?? 'document.pdf')}>
                           <span className="text-slate-400"><IconFile /></span>
@@ -533,8 +535,10 @@ export default function FeedPage() {
     {lightboxSrc && (
       <ImageLightbox
         src={lightboxSrc}
+        images={lightboxImages ?? undefined}
+        startIndex={lightboxIndex}
         filename={lightboxName}
-        onClose={() => { setLightboxSrc(null); setLightboxName('') }}
+        onClose={() => { setLightboxSrc(null); setLightboxName(''); setLightboxImages(null) }}
       />
     )}
 
@@ -565,7 +569,7 @@ export default function FeedPage() {
                     <div className="grid grid-cols-3 gap-2">
                       {feedPhotoItems.map(img => (
                         <img key={img.key} src={img.url} alt={img.name ?? ''} className="w-full h-24 object-cover rounded-xl border border-slate-100 hover:opacity-90 transition-opacity" style={{ cursor: 'zoom-in' }}
-                          onClick={() => { setShowFiles(false); setLightboxSrc(img.url); setLightboxName(img.name ?? 'image') }} />
+                          onClick={() => { setShowFiles(false); setLightboxImages(null); setLightboxSrc(img.url); setLightboxName(img.name ?? 'image') }} />
                       ))}
                     </div>
                   </div>

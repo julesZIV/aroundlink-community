@@ -1,5 +1,5 @@
 'use client'
-import { useState, type CSSProperties } from 'react'
+import { useState, useRef, type CSSProperties } from 'react'
 
 const circleBtn: CSSProperties = {
   width: 30, height: 30, borderRadius: '50%',
@@ -9,19 +9,27 @@ const circleBtn: CSSProperties = {
 }
 
 /** Carrousel d'images pour un post du feed (plusieurs photos). */
-export default function PostCarousel({ images, onOpen }: { images: string[]; onOpen?: (src: string) => void }) {
+export default function PostCarousel({ images, onOpen }: { images: string[]; onOpen?: (images: string[], index: number) => void }) {
   const [i, setI] = useState(0)
   const n = images.length
   const go = (d: number) => setI(prev => (prev + d + n) % n)
+  const touchX = useRef<number | null>(null)
 
   return (
-    <div className="mt-2 relative rounded-xl overflow-hidden" style={{ background: '#f1f5f9' }}>
+    <div className="mt-2 relative rounded-xl overflow-hidden" style={{ background: '#f1f5f9' }}
+      onTouchStart={n > 1 ? (e => { touchX.current = e.touches[0].clientX }) : undefined}
+      onTouchEnd={n > 1 ? (e => {
+        if (touchX.current === null) return
+        const dx = e.changedTouches[0].clientX - touchX.current
+        if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1)
+        touchX.current = null
+      }) : undefined}>
       <img
         src={images[i]}
         alt={`Image ${i + 1} / ${n}`}
         className="w-full object-cover"
         style={{ maxHeight: 380, display: 'block', cursor: onOpen ? 'zoom-in' : 'default' }}
-        onClick={() => onOpen?.(images[i])}
+        onClick={() => onOpen?.(images, i)}
       />
       {n > 1 && (
         <>

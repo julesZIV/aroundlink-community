@@ -110,6 +110,8 @@ export default function ChannelDetailPage() {
   const [infoOpen, setInfoOpen] = useState(false)  // unused — kept for compat
   const [lightboxSrc,  setLightboxSrc]  = useState<string | null>(null)
   const [lightboxName, setLightboxName] = useState<string>('')
+  const [lightboxImages, setLightboxImages] = useState<string[] | null>(null)
+  const [lightboxIndex,  setLightboxIndex]  = useState(0)
   const [likersIds,    setLikersIds]    = useState<string[] | null>(null)
   const [deletePostConfirm, setDeletePostConfirm] = useState<string | null>(null)
   const [postMenuOpen,      setPostMenuOpen]      = useState<string | null>(null)
@@ -765,9 +767,9 @@ export default function ChannelDetailPage() {
                             {post.media_url && (
                               post.media_type === 'image'
                                 ? (post.media_urls && post.media_urls.length > 1
-                                    ? <PostCarousel images={post.media_urls} onOpen={(src) => { setLightboxSrc(src); setLightboxName(post.media_name ?? 'image') }} />
+                                    ? <PostCarousel images={post.media_urls} onOpen={(imgs, idx) => { setLightboxImages(imgs); setLightboxIndex(idx); setLightboxSrc(imgs[idx]); setLightboxName(post.media_name ?? 'image') }} />
                                     : <img src={post.media_url} alt={post.media_name ?? ''} className="rounded-2xl w-full object-cover border border-slate-100 hover:opacity-95 transition-opacity mt-2" style={{ maxHeight: 360, cursor: 'zoom-in' }}
-                                        onClick={() => { setLightboxSrc(post.media_url!); setLightboxName(post.media_name ?? 'image') }} />)
+                                        onClick={() => { setLightboxImages(null); setLightboxSrc(post.media_url!); setLightboxName(post.media_name ?? 'image') }} />)
                                 : <div className="mt-2 flex items-center gap-3 bg-slate-50 rounded-xl p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
                                     onClick={() => downloadChannelMedia(post.media_url!, post.media_name ?? 'document.pdf')}>
                                     <span className="text-xl">📄</span>
@@ -955,7 +957,7 @@ export default function ChannelDetailPage() {
                           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">🖼️ Photos</p>
                           <div className="grid grid-cols-3 gap-2 mb-4">
                             {imageItems.map(img => (
-                              <img key={img.key} src={img.url} alt={img.name ?? ''} className="w-full h-24 object-cover rounded-xl border border-slate-100 hover:opacity-90 transition-opacity" style={{ cursor: 'zoom-in' }} onClick={() => setLightboxSrc(img.url)} />
+                              <img key={img.key} src={img.url} alt={img.name ?? ''} className="w-full h-24 object-cover rounded-xl border border-slate-100 hover:opacity-90 transition-opacity" style={{ cursor: 'zoom-in' }} onClick={() => { setLightboxImages(null); setLightboxSrc(img.url) }} />
                             ))}
                           </div>
                         </div>
@@ -1070,8 +1072,10 @@ export default function ChannelDetailPage() {
     {lightboxSrc && (
       <ImageLightbox
         src={lightboxSrc}
+        images={lightboxImages ?? undefined}
+        startIndex={lightboxIndex}
         filename={lightboxName}
-        onClose={() => { setLightboxSrc(null); setLightboxName('') }}
+        onClose={() => { setLightboxSrc(null); setLightboxName(''); setLightboxImages(null) }}
       />
     )}
     {likersIds && <LikersModal userIds={likersIds} onClose={() => setLikersIds(null)} />}
