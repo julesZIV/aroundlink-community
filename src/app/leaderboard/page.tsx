@@ -325,8 +325,8 @@ export default function LeaderboardPage() {
                         </div>
                         <span style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', fontSize: 16 }}>{MEDAL[rank]}</span>
                       </div>
-                      <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 700, color: '#1a3055', textAlign: 'center', maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {inst.name.split(' ')[0]}
+                      <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 700, color: '#1a3055', textAlign: 'center', maxWidth: 120, lineHeight: 1.2, wordBreak: 'break-word' }}>
+                        {inst.name}
                       </p>
                       <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 800, color: '#f59e0b' }}>🔗 {inst.totalLinks}</p>
                       <div style={{
