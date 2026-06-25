@@ -238,7 +238,7 @@ export default function UserProfilePage() {
                       ) : (
                         <div style={{ position: 'relative', maxWidth: 380 }}>
                           <input autoFocus value={instQuery} onChange={e => searchInst(e.target.value)}
-                            placeholder="Search the official university list…"
+                            placeholder="Search by name, city or domain…"
                             style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 10px', fontSize: 13, outline: 'none' }} />
                           {instResults.length > 0 && (
                             <div style={{ position: 'absolute', zIndex: 50, left: 0, right: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4, maxHeight: 240, overflowY: 'auto' }}>

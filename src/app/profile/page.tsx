@@ -604,7 +604,7 @@ export default function ProfilePage() {
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   onFocus={() => { if (institution.length >= 2) setShowSuggestions(true) }}
                   className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-slate-300"
-                  placeholder="Search your university…" />
+                  placeholder="Search by name, city or email domain (e.g. unige.it)…" />
                 {/* Autocomplete dropdown */}
                 {showSuggestions && institutionSuggestions.length > 0 && (
                   <div className="absolute z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 overflow-hidden" style={{ maxHeight: 240, overflowY: 'auto' }}>
