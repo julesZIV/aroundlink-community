@@ -269,12 +269,9 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     setSaveError(null)
-    // Anti-doublons : si une institution est renseignée, elle doit être choisie
-    // dans la liste officielle (ROR) — donc university_id doit être rempli.
-    if (institution.trim() && universityId === null) {
-      setSaveError('Please pick your university from the suggestions so it links to the official directory — this prevents duplicates.')
-      return
-    }
+    // On encourage à choisir dans la liste ROR (drapeau + dédoublonnage), mais le
+    // texte libre est autorisé en secours pour les organisations hors ROR
+    // (écoles, entreprises, ONG…) qui n'y figurent pas.
     setSaving(true)
     const fullName = `${firstName} ${lastName}`.trim()
     try {
@@ -636,7 +633,7 @@ export default function ProfilePage() {
                 {universityId !== null ? (
                   <p className="text-xs text-green-600 mt-1">✓ Linked to the official directory</p>
                 ) : institution.trim().length >= 2 && (
-                  <p className="text-xs text-amber-600 mt-1">💡 Pick your university from the list so it's linked correctly — this keeps everyone under the same institution.</p>
+                  <p className="text-xs text-slate-400 mt-1">💡 If your institution is in the list, pick it to add its flag — otherwise your text is saved as is.</p>
                 )}
               </div>
               <div>
