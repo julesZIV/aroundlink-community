@@ -116,7 +116,14 @@ export function useFeed(userId: string | undefined) {
     setPosts(prev => [optimistic, ...prev])
 
     const { data, error } = await supabase.from('feed_posts').insert(row).select(SELECT).single()
-    if (error) { setPosts(prev => prev.filter(p => p.id !== tempId)); pushError(`Could not post: ${error.message}`); return error.message }
+    if (error) {
+      setPosts(prev => prev.filter(p => p.id !== tempId))
+      const friendly = error.message.includes('rate_limit')
+        ? 'You can share up to 3 posts per hour. Tip: add several photos to one post (up to 10) instead of posting them one by one 📸'
+        : `Could not post: ${error.message}`
+      pushError(friendly)
+      return error.message
+    }
     if (data) {
       setPosts(prev => prev.map(p => p.id === tempId ? data as unknown as PostWithMeta : p))
       refreshProfile()
