@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import { parseTs } from '@/lib/parseTs'
 import { useParams, useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import { useChannels } from '@/lib/hooks/useChannels'
@@ -698,7 +699,7 @@ export default function ChannelDetailPage() {
                                 {post.user_id === user?.id && <span className="ml-1 text-slate-400 font-normal">(you)</span>}
                               </button>
                               <span className="text-xs text-slate-400">
-                                {new Date(post.created_at).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
+                                {parseTs(post.created_at).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
                               </span>
                               <div className="ml-auto flex items-center gap-1">
                                 {post.user_id === user?.id && (
@@ -971,7 +972,7 @@ export default function ChannelDetailPage() {
                                 <span className="text-2xl flex-shrink-0">📕</span>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-semibold text-slate-700 truncate">{p.media_name ?? 'Document'}</p>
-                                  <p className="text-xs text-slate-400">{p.profiles?.name ?? 'Member'} · {new Date(p.created_at).toLocaleDateString('en-GB')}</p>
+                                  <p className="text-xs text-slate-400">{p.profiles?.name ?? 'Member'} · {parseTs(p.created_at).toLocaleDateString('en-GB')}</p>
                                 </div>
                                 <a href={p.media_url!} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline flex-shrink-0">View →</a>
                               </div>
@@ -983,7 +984,7 @@ export default function ChannelDetailPage() {
                                 </span>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-semibold text-slate-700 truncate">{doc.name}</p>
-                                  <p className="text-xs text-slate-400">{new Date(doc.created_at).toLocaleDateString('en-GB')}</p>
+                                  <p className="text-xs text-slate-400">{parseTs(doc.created_at).toLocaleDateString('en-GB')}</p>
                                 </div>
                                 {doc.file_url && (
                                   <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline flex-shrink-0">View →</a>

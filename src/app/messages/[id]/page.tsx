@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import { parseTs } from '@/lib/parseTs'
 import { useParams, useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -110,11 +111,11 @@ export default function ConversationPage() {
   const ini = initials(otherProfile)
 
   function formatTime(iso: string) {
-    return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    return parseTs(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
   }
 
   function formatDate(iso: string) {
-    const d = new Date(iso)
+    const d = parseTs(iso)
     const today     = new Date(); today.setHours(0,0,0,0)
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
     const msgDate   = new Date(d); msgDate.setHours(0,0,0,0)
@@ -124,7 +125,7 @@ export default function ConversationPage() {
   }
 
   function timeAgo(iso: string) {
-    const diff = (Date.now() - new Date(iso).getTime()) / 1000
+    const diff = (Date.now() - parseTs(iso).getTime()) / 1000
     if (diff < 60)    return 'now'
     if (diff < 3600)  return `${Math.floor(diff / 60)}m`
     if (diff < 86400) return `${Math.floor(diff / 3600)}h`

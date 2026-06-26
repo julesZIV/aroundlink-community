@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { parseTs } from '@/lib/parseTs'
 import { useParams, useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import { createClient } from '@/lib/supabase/client'
@@ -180,7 +181,7 @@ export default function UserProfilePage() {
   const links       = profile?.links ?? 0
   const RANK_LABEL  = links >= 500 ? '🏆 Expert' : links >= 300 ? '⭐ Contributor' : links >= 100 ? '🌱 Member' : '👋 Newcomer'
   const memberSince = profile
-    ? new Date(profile.created_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+    ? parseTs(profile.created_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
     : ''
 
   return (
@@ -330,7 +331,7 @@ export default function UserProfilePage() {
                           {r.institution && <p style={{ fontSize: 11, color: '#94a3b8', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.institution}</p>}
                         </div>
                         <span style={{ fontSize: 11, color: '#cbd5e1', flexShrink: 0 }}>
-                          {new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                          {parseTs(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                         </span>
                       </button>
                     )

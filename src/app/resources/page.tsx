@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { parseTs } from '@/lib/parseTs'
 import Link from 'next/link'
 import AppShell from '@/components/layout/AppShell'
 import { useChannels } from '@/lib/hooks/useChannels'
@@ -107,7 +108,7 @@ export default function ResourcesPage() {
                               </Link>
                             )}
                             <span className="text-xs text-slate-400">·</span>
-                            <span className="text-xs text-slate-400">{new Date(doc.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                            <span className="text-xs text-slate-400">{parseTs(doc.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                           </div>
                         </div>
                         {doc.file_url && (

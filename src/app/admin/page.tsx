@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { parseTs } from '@/lib/parseTs'
 import AppShell from '@/components/layout/AppShell'
 import AvatarImg from '@/components/ui/AvatarImg'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -670,7 +671,7 @@ export default function AdminPage() {
                         <p className="font-bold text-slate-800 text-sm">#{req.name}</p>
                         {req.description && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{req.description}</p>}
                         <p className="text-xs text-slate-400 mt-1">
-                          By <span className="font-semibold">{requesterName}</span> · {new Date(req.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          By <span className="font-semibold">{requesterName}</span> · {parseTs(req.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                         </p>
                       </div>
                       <div className="flex-shrink-0 flex items-center gap-2">

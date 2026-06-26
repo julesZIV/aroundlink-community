@@ -1,5 +1,6 @@
 'use client'
 import AppShell from '@/components/layout/AppShell'
+import { parseTs } from '@/lib/parseTs'
 import { useFeed }  from '@/lib/hooks/useFeed'
 import { useAuth }  from '@/lib/hooks/useAuth'
 import { useState, useRef, useEffect } from 'react'
@@ -333,7 +334,7 @@ export default function FeedPage() {
                     </button>
                     {isMe && <span className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">you</span>}
                     <span className="text-xs text-slate-400 ml-auto">
-                      {new Date(post.created_at).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
+                      {parseTs(post.created_at).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
                     </span>
                     {isMe && (
                       <div style={{ position: 'relative' }}>
@@ -583,7 +584,7 @@ export default function FeedPage() {
                           <span className="text-2xl flex-shrink-0">📕</span>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-slate-700 truncate">{p.media_name ?? 'Document'}</p>
-                            <p className="text-xs text-slate-400">{p.profiles?.name ?? 'Member'} · {new Date(p.created_at).toLocaleDateString('en-GB')}</p>
+                            <p className="text-xs text-slate-400">{p.profiles?.name ?? 'Member'} · {parseTs(p.created_at).toLocaleDateString('en-GB')}</p>
                           </div>
                           <button onClick={() => downloadMedia(p.media_url!, p.media_name ?? 'document.pdf')}
                             className="text-xs font-semibold text-blue-600 hover:underline flex-shrink-0">Download →</button>

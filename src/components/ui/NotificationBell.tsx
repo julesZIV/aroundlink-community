@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { parseTs } from '@/lib/parseTs'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { MentionNotif } from '@/lib/hooks/useNotifications'
@@ -15,7 +16,7 @@ interface Props {
 }
 
 function timeAgo(iso: string) {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000
+  const diff = (Date.now() - parseTs(iso).getTime()) / 1000
   if (diff < 60)    return 'now'
   if (diff < 3600)  return `${Math.floor(diff / 60)}m`
   if (diff < 86400) return `${Math.floor(diff / 3600)}h`

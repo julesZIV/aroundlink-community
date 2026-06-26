@@ -1,5 +1,6 @@
 'use client'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { parseTs } from '@/lib/parseTs'
 import AppShell from '@/components/layout/AppShell'
 import { useConversations, displayName, initials } from '@/lib/hooks/useDirectMessages'
 import { useRouter } from 'next/navigation'
@@ -46,7 +47,7 @@ export default function MessagesPage() {
   }
 
   function timeAgo(iso: string) {
-    const diff = (Date.now() - new Date(iso).getTime()) / 1000
+    const diff = (Date.now() - parseTs(iso).getTime()) / 1000
     if (diff < 60)    return 'now'
     if (diff < 3600)  return `${Math.floor(diff / 60)}m`
     if (diff < 86400) return `${Math.floor(diff / 3600)}h`

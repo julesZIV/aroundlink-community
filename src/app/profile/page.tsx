@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { parseTs } from '@/lib/parseTs'
 import AppShell from '@/components/layout/AppShell'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useRouter } from 'next/navigation'
@@ -779,7 +780,7 @@ export default function ProfilePage() {
                         {u.institution && <p className="text-xs text-slate-400 truncate">{u.institution}</p>}
                       </div>
                       <p className="text-xs text-slate-400 flex-shrink-0">
-                        {new Date(u.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                        {parseTs(u.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
                       </p>
                     </button>
                   )
