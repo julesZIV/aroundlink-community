@@ -41,6 +41,7 @@ export default function Sidebar({ dmUnread = 0 }: { dmUnread?: number }) {
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [communityName, setCommunityName] = useState('AroundLink')
   const [networkVisible, setNetworkVisible] = useState(true)
+  const [channelsVisible, setChannelsVisible] = useState(true)
   const [myChannels, setMyChannels] = useState<{ id: string; name: string; emoji: string | null }[]>([])
 
   useEffect(() => {
@@ -53,6 +54,10 @@ export default function Sidebar({ dmUnread = 0 }: { dmUnread?: number }) {
       client.from('app_settings').select('value').eq('key', 'section_network_visible').single()
         .then(({ data }) => {
           if (data?.value !== undefined) setNetworkVisible(data.value !== 'false' && data.value !== false)
+        })
+      client.from('app_settings').select('value').eq('key', 'section_channels_visible').single()
+        .then(({ data }) => {
+          if (data?.value !== undefined) setChannelsVisible(data.value !== 'false' && data.value !== false)
         })
     })
   }, [])
@@ -77,6 +82,13 @@ export default function Sidebar({ dmUnread = 0 }: { dmUnread?: number }) {
     await createClient().from('app_settings').upsert({ key: 'section_network_visible', value: String(next) }, { onConflict: 'key' })
   }
 
+  const toggleChannels = async () => {
+    const next = !channelsVisible
+    setChannelsVisible(next)
+    const { createClient } = await import('@/lib/supabase/client')
+    await createClient().from('app_settings').upsert({ key: 'section_channels_visible', value: String(next) }, { onConflict: 'key' })
+  }
+
   return (
     <aside className="sidebar">
       {/* Brand */}
@@ -92,14 +104,16 @@ export default function Sidebar({ dmUnread = 0 }: { dmUnread?: number }) {
       {/* Main Nav */}
       <nav style={{ padding: '10px' }}>
         {BASE_NAV.map(item => {
-          // Network visibility logic
-          if (item.href === '/network') {
-            if (!networkVisible && !isAdmin) return null
-          }
+          // Sections masquables par l'admin (Institutions + Channels)
+          const togglable = item.href === '/network' || item.href === '/channels'
+          const sectVisible = item.href === '/network' ? networkVisible : item.href === '/channels' ? channelsVisible : true
+          const toggleSect  = item.href === '/network' ? toggleNetwork : toggleChannels
+          // Masqué aux membres si la section est cachée
+          if (togglable && !sectVisible && !isAdmin) return null
           const active = pathname.startsWith(item.href) && (item.href !== '/channels' || pathname === '/channels')
           const badge  = item.href === '/channels' && totalUnread > 0 ? totalUnread
                        : item.href === '/messages' && dmUnread > 0   ? dmUnread : 0
-          const dimmed = item.href === '/network' && isAdmin && !networkVisible
+          const dimmed = togglable && isAdmin && !sectVisible
           return (
             <div key={item.href} style={{ display: 'flex', alignItems: 'center', opacity: dimmed ? 0.4 : 1 }}>
               <Link href={item.href} style={{ textDecoration: 'none', flex: 1 }}>
@@ -115,10 +129,10 @@ export default function Sidebar({ dmUnread = 0 }: { dmUnread?: number }) {
                   )}
                 </button>
               </Link>
-              {item.href === '/network' && isAdmin && (
-                <button onClick={toggleNetwork} title={networkVisible ? 'Hide from members' : 'Show to members'}
+              {togglable && isAdmin && (
+                <button onClick={toggleSect} title={sectVisible ? 'Hide from members' : 'Show to members'}
                   style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14, padding: '0 6px', flexShrink: 0 }}>
-                  {networkVisible ? '👁' : '🚫'}
+                  {sectVisible ? '👁' : '🚫'}
                 </button>
               )}
             </div>
@@ -126,8 +140,8 @@ export default function Sidebar({ dmUnread = 0 }: { dmUnread?: number }) {
         })}
       </nav>
 
-      {/* My Channels shortcuts */}
-      {myChannels.length > 0 && (
+      {/* My Channels shortcuts (masqués aux membres si la section Channels est cachée) */}
+      {(channelsVisible || isAdmin) && myChannels.length > 0 && (
         <div style={{ padding: '0 10px', flex: 1, overflowY: 'auto' }}>
           <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '6px 8px 4px' }}>
             My Channels
@@ -162,6 +176,12 @@ export default function Sidebar({ dmUnread = 0 }: { dmUnread?: number }) {
         <div style={{ margin: '0 10px 6px', background: 'rgba(255,255,255,0.07)', borderRadius: 10, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flex: 1 }}>🌐 Network — hidden</span>
           <button onClick={toggleNetwork} title="Show section" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14, padding: 0 }}>👁</button>
+        </div>
+      )}
+      {isAdmin && !channelsVisible && (
+        <div style={{ margin: '0 10px 6px', background: 'rgba(255,255,255,0.07)', borderRadius: 10, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flex: 1 }}># Channels — hidden</span>
+          <button onClick={toggleChannels} title="Show section" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14, padding: 0 }}>👁</button>
         </div>
       )}
 
