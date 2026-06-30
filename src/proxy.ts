@@ -15,6 +15,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/manifest') ||
+    pathname === '/sw.js' ||
     pathname === '/favicon.ico' ||
     PUBLIC_ROUTES.some(r => pathname.startsWith(r))
   ) {
@@ -72,9 +73,10 @@ export async function proxy(req: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Appliquer le middleware sur toutes les routes sauf :
-     * - _next/static, _next/image, favicon.ico, sw.js, manifest
+     * Appliquer le proxy sur toutes les routes sauf les assets statiques :
+     * _next/static, _next/image, favicon.ico, sw.js, et le manifeste PWA.
+     * (Les routes /api sont en plus court-circuitées dans le corps de la fonction.)
      */
-    '/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|icons).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest).*)',
   ],
 }

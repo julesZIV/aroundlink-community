@@ -91,16 +91,33 @@ function AuthForm() {
     setError('')
     try {
       const ref = sessionStorage.getItem('al_ref') ?? refCode ?? ''
+      // Preserve the post-login destination through the OAuth round-trip.
+      // The proxy redirects protected routes to /auth?next=<path>; without
+      // forwarding it here, LinkedIn users always land on /feed.
+      const nextParam = searchParams.get('next')
+      const safeNext = nextParam && nextParam.startsWith('/') && !nextParam.includes('://')
+        ? nextParam
+        : ''
+      const params = new URLSearchParams()
+      if (ref) params.set('ref', ref)
+      if (safeNext) params.set('next', safeNext)
+      const qs = params.toString()
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin_oidc',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback${ref ? `?ref=${ref}` : ''}`,
+          redirectTo: `${window.location.origin}/auth/callback${qs ? `?${qs}` : ''}`,
           scopes: 'openid profile email',
         },
       })
       if (error) { setError(error.message); setLinkedinLoading(false); return }
       // Explicit redirect — some PWA/mobile contexts don't auto-redirect
-      if (data?.url) window.location.href = data.url
+      if (data?.url) {
+        window.location.href = data.url
+      } else {
+        // No URL and no error (rare PWA edge case): don't leave the spinner stuck
+        setError('LinkedIn sign-in could not start. Please try again.')
+        setLinkedinLoading(false)
+      }
     } catch (e: any) {
       setError(e?.message ?? 'LinkedIn sign-in failed. Please try again.')
       setLinkedinLoading(false)
@@ -111,28 +128,9 @@ function AuthForm() {
     e.preventDefault()
     setLoading(true); setError('')
 
-    // Check if this email has an account via server-side API (bypasses RLS safely)
-    try {
-      const res = await fetch('/api/check-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail.trim().toLowerCase() }),
-      })
-      const json = await res.json()
-      if (res.status === 429) {
-        setLoading(false)
-        setError(json.error ?? 'Too many requests. Please wait a moment.')
-        return
-      }
-      if (!json.exists) {
-        setLoading(false)
-        setError('No account found with this email. Please create an account first.')
-        return
-      }
-    } catch {
-      // If the check fails, allow the reset flow to proceed (graceful degradation)
-    }
-
+    // Security: do NOT reveal whether an account exists for this email
+    // (account enumeration). Supabase always returns success here, and we show
+    // the same neutral confirmation regardless of whether the address is known.
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
       redirectTo: `${origin}/auth/callback?next=/auth/reset-password`,

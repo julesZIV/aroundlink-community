@@ -6,9 +6,13 @@ import { createAdminClient } from '@/lib/supabase/server'
  * Body: { email: string }
  * Returns: { exists: boolean }
  *
- * Uses the service-role client (bypasses RLS) to check whether an email
- * is registered — without exposing any user data to unauthenticated callers.
- * Simple in-memory rate limiter: 5 checks per IP per 60 s.
+ * NOTE (security): the password-reset flow no longer calls this endpoint, to
+ * avoid account enumeration — the UI now shows a neutral confirmation whether or
+ * not the address is registered. This route is kept for internal/admin use only.
+ *
+ * Implementation: uses a server-side RPC (`email_exists`) instead of paging the
+ * entire auth.users table via listUsers(), which did not scale and loaded every
+ * user into memory. Rate limited to 5 checks / IP / 60 s.
  */
 
 const attempts = new Map<string, { count: number; resetAt: number }>()
@@ -45,15 +49,13 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient()
 
-  // The admin auth API supports getUserByEmail in newer versions.
-  // Fallback: search auth.users via a raw SQL function if needed.
-  // For ~300 users, fetching all is fine; use the admin list API.
-  const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+  // Targeted existence check via RPC (see migration email_exists_rpc.sql).
+  // Falls back to a non-blocking "true" if the RPC is unavailable, so the
+  // password-reset flow is never blocked by an infrastructure error.
+  const { data, error } = await admin.rpc('email_exists', { p_email: email })
   if (error) {
-    // Graceful degradation — don't block password reset flow
     return NextResponse.json({ exists: true })
   }
 
-  const exists = data.users.some(u => u.email?.toLowerCase() === email)
-  return NextResponse.json({ exists })
+  return NextResponse.json({ exists: !!data })
 }

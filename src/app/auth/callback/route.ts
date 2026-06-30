@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 
+// Hôtes LinkedIn autorisés pour le téléchargement d'avatar (anti-SSRF).
+// On n'accepte de fetch QUE des URLs servies par LinkedIn.
+const ALLOWED_AVATAR_HOSTS = ['media.licdn.com', 'media-exp1.licdn.com', 'media-exp2.licdn.com']
+// Taille max d'un avatar téléchargé : 5 Mo
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024
+
+function isAllowedAvatarUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw)
+    return u.protocol === 'https:' && ALLOWED_AVATAR_HOSTS.includes(u.hostname)
+  } catch {
+    return false
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code  = searchParams.get('code')
@@ -22,6 +37,16 @@ export async function GET(request: NextRequest) {
     if (!exchangeError && data.user) {
       const user = data.user
       const meta = user.user_metadata ?? {}
+
+      // ── Un seul SELECT sur le profil courant (au lieu de 3) ─────────────────
+      // On récupère d'un coup tout ce dont on a besoin pour les décisions
+      // ci-dessous : avatar déjà hébergé, nom/linkedin déjà personnalisés,
+      // preuve de consentement déjà enregistrée.
+      const { data: current } = await supabase
+        .from('profiles')
+        .select('avatar_url, name, linkedin, terms_accepted_at')
+        .eq('id', user.id)
+        .single()
 
       // Process referral from OAuth flow (ref passed in redirectTo URL)
       if (ref) {
@@ -54,58 +79,61 @@ export async function GET(request: NextRequest) {
       // Sync profile data from auth metadata
       const updates: Record<string, any> = {}
 
-      // Names — LinkedIn OIDC provides given_name / family_name
-      // Email signup provides first_name / last_name directly in metadata
-      if (meta.given_name || meta.family_name) {
-        updates.first_name   = meta.given_name  ?? null
-        updates.last_name    = meta.family_name ?? null
-        updates.name         = [meta.given_name, meta.family_name].filter(Boolean).join(' ')
-      } else if (meta.first_name || meta.last_name) {
-        // Email signup metadata
-        updates.first_name = meta.first_name ?? null
-        updates.last_name  = meta.last_name  ?? null
-        updates.name       = meta.name ?? [meta.first_name, meta.last_name].filter(Boolean).join(' ')
-      } else if (meta.full_name || meta.name) {
-        const full = meta.full_name ?? meta.name
-        const parts = full.trim().split(' ')
-        updates.first_name = parts[0] ?? null
-        updates.last_name  = parts.slice(1).join(' ') || null
-        updates.name       = full
+      // ── Noms ────────────────────────────────────────────────────────────────
+      // On ne renseigne le nom QUE si le profil n'en a pas encore un
+      // personnalisé. Sinon, chaque reconnexion LinkedIn écraserait un nom
+      // que l'utilisateur aurait édité manuellement.
+      const hasCustomName = !!(current?.name && current.name.trim() && current.name !== 'Inactive Member')
+      if (!hasCustomName) {
+        if (meta.given_name || meta.family_name) {
+          updates.first_name = meta.given_name  ?? null
+          updates.last_name  = meta.family_name ?? null
+          updates.name       = [meta.given_name, meta.family_name].filter(Boolean).join(' ')
+        } else if (meta.first_name || meta.last_name) {
+          updates.first_name = meta.first_name ?? null
+          updates.last_name  = meta.last_name  ?? null
+          updates.name       = meta.name ?? [meta.first_name, meta.last_name].filter(Boolean).join(' ')
+        } else if (meta.full_name || meta.name) {
+          const full = meta.full_name ?? meta.name
+          const parts = full.trim().split(' ')
+          updates.first_name = parts[0] ?? null
+          updates.last_name  = parts.slice(1).join(' ') || null
+          updates.name       = full
+        }
       }
 
-      // Avatar — LinkedIn renvoie une URL signée TEMPORAIRE (media.licdn.com)
-      // qui expire en quelques semaines (→ HTTP 403, photo cassée). On télécharge
-      // donc l'image une fois et on l'héberge sur Supabase pour qu'elle soit
-      // permanente. Si le téléchargement échoue, on retombe sur l'URL brute.
+      // ── Avatar ──────────────────────────────────────────────────────────────
+      // LinkedIn renvoie une URL signée TEMPORAIRE (media.licdn.com) qui expire
+      // en quelques semaines (→ HTTP 403, photo cassée). On télécharge donc
+      // l'image une fois et on l'héberge sur Supabase. Sécurité : on ne fetch
+      // que des hôtes LinkedIn (anti-SSRF), on plafonne la taille et on vérifie
+      // que le contenu est bien une image.
       const incomingAvatar: string | null = meta.avatar_url ?? meta.picture ?? null
-      if (incomingAvatar) {
-        const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+      const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+      const alreadyHosted = !!current?.avatar_url
+        && supabaseHost !== ''
+        && current.avatar_url.startsWith(supabaseHost)
+        && current.avatar_url.includes('/avatars/')
 
-        // L'avatar est-il déjà hébergé chez nous ? si oui, on n'y touche pas.
-        const { data: current } = await supabase
-          .from('profiles').select('avatar_url').eq('id', user.id).single()
-        const alreadyHosted = !!current?.avatar_url
-          && supabaseHost !== ''
-          && current.avatar_url.startsWith(supabaseHost)
-          && current.avatar_url.includes('/avatars/')
+      if (incomingAvatar && !alreadyHosted && isAllowedAvatarUrl(incomingAvatar)) {
+        try {
+          const controller = new AbortController()
+          const timer = setTimeout(() => controller.abort(), 8000)
+          const res = await fetch(incomingAvatar, { signal: controller.signal })
+          clearTimeout(timer)
 
-        const isRemote = typeof incomingAvatar === 'string'
-          && incomingAvatar.startsWith('http')
-          && (supabaseHost === '' || !incomingAvatar.startsWith(supabaseHost))
+          const contentType = res.headers.get('content-type') ?? ''
+          const declaredLen = Number(res.headers.get('content-length') ?? '0')
 
-        if (alreadyHosted) {
-          // garder l'avatar permanent existant — ne rien faire
-        } else if (isRemote) {
-          try {
-            const controller = new AbortController()
-            const timer = setTimeout(() => controller.abort(), 8000)
-            const res = await fetch(incomingAvatar, { signal: controller.signal })
-            clearTimeout(timer)
-            if (res.ok) {
-              const contentType = res.headers.get('content-type') ?? 'image/jpeg'
+          // Le contenu doit être une image et ne pas dépasser la limite de taille
+          const isImage = contentType.startsWith('image/')
+          const tooLargeByHeader = declaredLen > MAX_AVATAR_BYTES
+
+          if (res.ok && isImage && !tooLargeByHeader) {
+            const buf = new Uint8Array(await res.arrayBuffer())
+            if (buf.byteLength > 0 && buf.byteLength <= MAX_AVATAR_BYTES) {
               const ext = contentType.includes('png') ? 'png'
                 : contentType.includes('webp') ? 'webp' : 'jpg'
-              const buf = new Uint8Array(await res.arrayBuffer())
               const path = `${user.id}/linkedin.${ext}`
               const { error: upErr } = await supabase.storage
                 .from('avatars')
@@ -113,36 +141,36 @@ export async function GET(request: NextRequest) {
               if (!upErr) {
                 const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path)
                 updates.avatar_url = pub.publicUrl
-              } else {
-                updates.avatar_url = incomingAvatar // fallback : URL brute
               }
-            } else {
-              updates.avatar_url = incomingAvatar // fallback : URL brute
+              // Si l'upload échoue : on NE retombe PAS sur l'URL LinkedIn brute
+              // (elle expirera et cassera la photo). On laisse l'avatar inchangé.
             }
-          } catch {
-            updates.avatar_url = incomingAvatar // fallback : URL brute
           }
-        } else {
-          updates.avatar_url = incomingAvatar
+        } catch {
+          // timeout / réseau : on laisse l'avatar inchangé (pas d'URL temporaire)
         }
+      } else if (incomingAvatar && !alreadyHosted && !current?.avatar_url
+                 && incomingAvatar.startsWith(supabaseHost) && supabaseHost !== '') {
+        // Avatar déjà servi par notre propre storage et pas encore enregistré
+        updates.avatar_url = incomingAvatar
       }
 
-      // LinkedIn profile URL — available via OIDC `profile` claim or identity_data
-      const linkedinUrl =
-        meta.profile ??
-        meta.linkedin ??
-        user.identities?.find((i: any) => i.provider === 'linkedin_oidc')?.identity_data?.profile ??
-        null
+      // ── LinkedIn profile URL ──────────────────────────────────────────────
+      // Renseignée seulement si l'utilisateur n'en a pas déjà une (sinon une
+      // URL éditée manuellement serait écrasée à chaque reconnexion).
+      if (!current?.linkedin) {
+        const linkedinUrl =
+          meta.profile ??
+          meta.linkedin ??
+          user.identities?.find((i: any) => i.provider === 'linkedin_oidc')?.identity_data?.profile ??
+          null
+        if (linkedinUrl) updates.linkedin = linkedinUrl
+      }
 
-      if (linkedinUrl) updates.linkedin = linkedinUrl
-
-      // GDPR consent proof — record ToS acceptance on the profile the first time we
-      // have a session. Covers email-confirmation completion AND LinkedIn sign-up.
-      // Email signup carries the real acceptance timestamp in metadata; for LinkedIn
-      // the user ticked the box in the UI before the OAuth redirect, so we stamp now.
-      const { data: termsRow } = await supabase
-        .from('profiles').select('terms_accepted_at').eq('id', user.id).single()
-      if (!termsRow?.terms_accepted_at) {
+      // ── Preuve de consentement RGPD ───────────────────────────────────────
+      // Enregistrée la première fois qu'on a une session (email confirmé OU
+      // inscription LinkedIn). Réutilise le SELECT groupé ci-dessus.
+      if (!current?.terms_accepted_at) {
         updates.terms_version     = meta.terms_version ?? '1.0'
         updates.terms_accepted_at = meta.terms_accepted_at ?? new Date().toISOString()
       }
